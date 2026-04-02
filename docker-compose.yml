@@ -1,0 +1,10 @@
+services:
+  jupyter:
+    build:
+      context: .
+      dockerfile: ./preprocessing/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./notebooks:/Serenair/notebooks
+      - ./data:/Serenair/data

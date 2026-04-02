@@ -1,0 +1,4 @@
+# Basic libraries
+pandas
+scikit-learn
+numpy
