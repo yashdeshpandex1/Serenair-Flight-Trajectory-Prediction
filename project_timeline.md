@@ -4,4 +4,4 @@
             <br></br>
 **[4/4/2026]**: Finally, collected the data from opensky api with 1,000,000 rows and a bunch of features.
                 <br></br>
-**[6/6/2026]**: Introduced multiple utilities, data cleaning and feature engineering scripts.
+**[6/6/2026]**: Introduced utilities, data cleaning and feature engineering scripts.
