@@ -6,15 +6,13 @@ import pandas as pd
 # Import sorting function from utilties
 from utilities import sort_values
 
-df = pd.read_csv('../data/opensky_raw.csv') # initialise df
-
-df_sorted = sort_values(df) # Sort by icao24 and timestamp
-
 # Clean the dataframe
 def clean_df(df: pd.DataFrame) -> pd.DataFrame:
     """
     Cleans the OpenSky Dataset with most appropriate methods.
     """
+    df_init = pd.read_csv('../data/opensky_raw.csv') # initialise df
+    df = sort_values(df_init) # sort by icao24 and timestamp
     df = df.dropna(subset=['latitude', 'longitude']) # drop the rows where latitude and longitude are missing
     df.loc[:, 'baro_altitude'] = df['baro_altitude'].fillna(df['baro_altitude'].median()) # fill baro altitude missing values with median
     df.loc[:, 'velocity'] = df['velocity'].fillna(df['velocity'].median()) # fill missing velocity with median as well
