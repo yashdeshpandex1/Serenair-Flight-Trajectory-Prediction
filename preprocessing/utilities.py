@@ -4,7 +4,12 @@
 import numpy as np
 import pandas as pd
 
-df = pd.read_csv('../data/opensky_raw.csv') # Make a dataframe of our data.
+def initialise_df() -> pd.DataFrame:
+    """
+    Simply initialises a dataframe from the csv file.
+    """
+    df = pd.read_csv('../data/opensky_raw.csv')
+    return df
 
 # one plane (based on its unique icao24 number) can have multiple
 # entries. If those are not sorted by their icao24 number and timestamp, 
@@ -22,7 +27,24 @@ def sort_values(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 # get the number of unique aircrafts present in dataset.
-def num_aircrafts(df=df, col='timestamp'):
+def num_aircrafts(df: pd.DataFrame, col='timestamp'):
     """Outputs the number of unique aircrafts in our dataset.
     """
-    return df[col].nunique()
+    return df[col].nunique() 
+
+
+def intialise_features_and_target() -> tuple[list[str], list[str]]:
+    """initialise features and target lists.
+
+    Returns:
+        feature and target columns list.
+    """
+    target = ['delta_latitude', 
+              'delta_longitude']
+    
+    features = ['velocity', 'vertical_rate', 'baro_altitude',
+            'delta_time', 'track_sin', 'track_cos', 
+            'delta_latitude', 'delta_longitude', 
+            'acceleration', 'turn_rate', 'climb_phase', 'origin_country',
+            'hour_sin', 'hour_cos']
+    return features, target
