@@ -4,4 +4,6 @@
             <br></br>
 **[4/4/2026]**: Finally, collected the data from opensky api with 1,000,000 rows and a bunch of features.
                 <br></br>
-**[6/6/2026]**: Introduced utilities, data cleaning and feature engineering scripts.
+**[6/4/2026]**: Introduced utilities, data cleaning and feature engineering scripts.
+            <br></br>
+**[1/5/2026]**: Wrote a connection script to Azure PostgreSQL database and updated docker container. [delay because I was busy with college commitments]
