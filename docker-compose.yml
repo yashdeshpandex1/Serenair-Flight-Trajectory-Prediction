@@ -8,3 +8,16 @@ services:
     volumes:
       - ./notebooks:/Serenair/notebooks
       - ./data:/Serenair/data
+
+  database:
+    build:
+      context: .
+      dockerfile: ./database/Dockerfile
+    env_file:
+     - .env
+    volumes:
+     - ./data:/Serenair/data
+     - ./database:/Serenair/database
+    restart: on-failure
+    ports:
+      - "5432:5432"

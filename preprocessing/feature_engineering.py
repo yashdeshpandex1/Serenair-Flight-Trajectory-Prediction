@@ -1,3 +1,6 @@
+# Feature engineering for our dataset
+
+# Imports
 import pandas as pd # for working with dataframes
 import numpy as np # for mathematical operations
 
