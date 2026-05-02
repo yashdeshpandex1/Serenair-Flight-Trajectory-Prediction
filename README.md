@@ -10,7 +10,7 @@ Retrieves data from OpenSky api to predict flight trajectory.
   1. aircraft - has information about the aircrafts (icao24 and origin country).
   2. aircraft states - has all the aircraft state vectors.
  
-- <img width="401" height="496" alt="db_schema" src="https://github.com/user-attachments/assets/716b42b0-fd01-4054-8637-43f0183b1ae2" />
+<img width="401" height="496" alt="db_schema" src="https://github.com/user-attachments/assets/783daa08-1a09-4c06-98f6-efec5d918b44" />
 
 <br></br>
 
