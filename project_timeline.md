@@ -7,3 +7,5 @@
 **[6/4/2026]**: Introduced utilities, data cleaning and feature engineering scripts.
             <br></br>
 **[1/5/2026]**: Wrote a connection script to Azure PostgreSQL database and updated docker container. [delay because I was busy with college commitments]
+            <br></br>
+**[2/5/2026]**: Created a database schema having two tables - aircraft and aircraft states.
