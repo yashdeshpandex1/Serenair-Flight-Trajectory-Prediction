@@ -3,6 +3,13 @@ Retrieves data from OpenSky api to predict flight trajectory.
 <br></br>
 
 > You can get a copy of the raw global dataset that I collected from OpenSky here: [OpenSky_raw_dataset](https://github.com/yashdeshpandex1/Serenair-Flight-Trajectory-Detection/releases/download/v1.0/opensky_raw.csv)
+<br></br>
+
+### Database Schema:
+- Created two tables
+  1. aircraft - has information about the aircrafts (icao24 and origin country).
+  2. aircraft states - has all the aircraft state vectors. 
+<br></br>
 
 ### Deployment:
 - I created a postgreSQL database on Azure.
