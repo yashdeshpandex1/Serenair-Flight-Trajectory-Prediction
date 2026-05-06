@@ -16,7 +16,7 @@ def create_tables():
         id BIGSERIAL PRIMARY KEY,
         
         icao24 CHAR(6) REFERENCES aircraft(icao24),
-        callsign VARCHAR()
+        callsign VARCHAR(8)
         timestamp BIGINT NOT NULL,
         
         latitude DOUBLE PRECISION,
@@ -28,8 +28,6 @@ def create_tables():
         true_track DOUBLE PRECISION,
         geo_altitude DOUBLE PRECISION,
         on_ground BOOLEAN,
-        
-        origin_country VARCHAR(100)
         
     );
     """
