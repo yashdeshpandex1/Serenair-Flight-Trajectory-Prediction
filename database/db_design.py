@@ -1,8 +1,8 @@
 import psycopg
-from database_conn import connect_to_azure
+from database_conn import get_connection_uri
 
 def create_tables():
-    conn_string =  connect_to_azure()
+    conn_string =  get_connection_uri()
     
     create_aircraft_table = """
     CREATE TABLE IF NOT EXISTS aircraft (
@@ -16,7 +16,7 @@ def create_tables():
         id BIGSERIAL PRIMARY KEY,
         
         icao24 CHAR(6) REFERENCES aircraft(icao24),
-        callsign VARCHAR(8)
+        callsign VARCHAR(8),
         timestamp BIGINT NOT NULL,
         
         latitude DOUBLE PRECISION,
@@ -27,7 +27,7 @@ def create_tables():
         vertical_rate DOUBLE PRECISION,
         true_track DOUBLE PRECISION,
         geo_altitude DOUBLE PRECISION,
-        on_ground BOOLEAN,
+        on_ground BOOLEAN
         
     );
     """

@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import psycopg
 
-load_dotenv()
+load_dotenv('../.env')
 
 def get_connection_uri():
     
