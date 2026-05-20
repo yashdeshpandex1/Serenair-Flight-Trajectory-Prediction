@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler # import StandardScaler
 
 # Since our dataset has groups of different aircrafts
 # We will have to go for group shuffle split
-def group_shuffle_split(df: pd.DataFrame, features) -> pd.DataFrame:
+def group_shuffle_split(df: pd.DataFrame) -> pd.DataFrame:
     """Does a Group Shuffle Split on the dataset.
     Can't use train test split because the training examples are linked in groups.
     """

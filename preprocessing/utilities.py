@@ -4,11 +4,11 @@
 import numpy as np
 import pandas as pd
 
-def initialise_df() -> pd.DataFrame:
+def initialise_df(path: str) -> pd.DataFrame:
     """
-    Simply initialises a dataframe from the csv file.
+    Simply initialises a dataframe from the path provided.
     """
-    df = pd.read_csv('../data/opensky_raw.csv')
+    df = pd.read_csv(path)
     return df
 
 # one plane (based on its unique icao24 number) can have multiple
@@ -33,7 +33,7 @@ def num_aircrafts(df: pd.DataFrame, col='timestamp'):
     return df[col].nunique() 
 
 
-def intialise_features_and_target() -> tuple[list[str], list[str]]:
+def initialise_features_and_target() -> tuple[list[str], list[str]]:
     """initialise features and target lists.
 
     Returns:
@@ -45,6 +45,6 @@ def intialise_features_and_target() -> tuple[list[str], list[str]]:
     features = ['velocity', 'vertical_rate', 'baro_altitude',
             'delta_time', 'track_sin', 'track_cos', 
             'delta_latitude', 'delta_longitude', 
-            'acceleration', 'turn_rate', 'climb_phase', 'origin_country',
+            'acceleration', 'turn_rate', 'climb_phase',
             'hour_sin', 'hour_cos']
     return features, target
