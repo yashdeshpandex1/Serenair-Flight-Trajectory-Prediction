@@ -10,4 +10,7 @@
             <br></br>
 **[2/5/2026]**: Created a database schema having two tables - aircraft and aircraft states.
             <br></br>
-**[15/5/2026]**: Added a chunking mechanism because RAM wasn't as powerful to input all the data at once, added a tqdm bar as well. [exams finally over]
+**[15/5/2026]**: Added a chunking mechanism because RAM wasn't as powerful to input all the data at once, added a tqdm bar as well. 
+            <br></br>
+**[20/5/2026]**: I added a 'prepare training data' script that makes use of all the preprocessing and engineering scripts I created earlier. 
+            It makes data appropriate for using model on it. [p.s: exams finally over!]
