@@ -15,3 +15,6 @@
 **[20/5/2026]**: I added a 'prepare training data' script that makes use of all the preprocessing and engineering scripts I created earlier. 
             It makes data appropriate for using model on it. [p.s: exams finally over!]
             I also created scripts for creating sequences of data for RNN and saving it in npz format.
+            <br></br>
+**[21/5/2026]**: I made changes to training data prep scripts I made earlier as well I fixed issue where Pytorch would fail to import.
+            <br></br>
