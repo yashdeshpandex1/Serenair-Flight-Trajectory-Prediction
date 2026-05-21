@@ -80,4 +80,3 @@ def save_sequences(train_df, test_df, features, target, window_size=10):
                         anchor_test = anchor_test_seq)
     print('Data saved successfully..')
 
-
