@@ -211,3 +211,5 @@ __marimo__/
 
 *.npz
 *.joblib
+config.json
+*.db
