@@ -17,3 +17,4 @@ Retrieves data from OpenSky api to predict flight trajectory.
 ### Deployment:
 - I created a postgreSQL database on Azure.
   configuration: Burstable, B1ms, 1 vCores, 2 GiB RAM, 32 GiB storage. I found this low-end resource ideal for this project.
+- Mlflow server used for Experiment tracking is setup using Azure MLflow and uses a postgreSQL database.
