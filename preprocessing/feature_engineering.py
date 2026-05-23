@@ -31,11 +31,11 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     delta_zero = df['delta_time'].replace(0, 1) # replace delta 0 with 1.
     
     # Calculate previous velocity and acceleration from previous velocity.
-    df['prev_velocity'] = df.groupby('icao24')['velocity'].shift(1)
+    df['prev_velocity'] = (df.groupby('icao24')['velocity'].shift(1)).fillna(0)
     df['acceleration'] = ((df['velocity'] - df['prev_velocity']) / delta_zero).fillna(0)
     
     # Calculate previous track
-    df['prev_track'] = df.groupby('icao24')['true_track'].shift(1)
+    df['prev_track'] = (df.groupby('icao24')['true_track'].shift(1)).fillna(0)
     track_diff = df['true_track'] - df['prev_track'] # Calculate track difference.
     track_diff = (track_diff + 180) % 360 - 180
     # finally calculate turn rate of aircraft

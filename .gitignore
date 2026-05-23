@@ -213,3 +213,4 @@ __marimo__/
 *.joblib
 config.json
 *.db
+*.pth

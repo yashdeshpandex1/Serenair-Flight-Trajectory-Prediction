@@ -44,7 +44,7 @@ def initialise_features_and_target() -> tuple[list[str], list[str]]:
     
     features = ['velocity', 'vertical_rate', 'baro_altitude',
             'delta_time', 'track_sin', 'track_cos', 
-            'delta_latitude', 'delta_longitude', 
+            'latitude', 'longitude', 
             'acceleration', 'turn_rate', 'climb_phase',
             'hour_sin', 'hour_cos']
     return features, target
