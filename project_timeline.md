@@ -19,3 +19,6 @@
 **[21/5/2026]**: I made changes to training data prep scripts I made earlier as well I fixed issue where Pytorch would fail to import.
             <br></br>
 **[22/5/2026]**: I setup mlflow tracking server for experiment tracking using Azure ML. 
+            <br></br>
+**[23/5/2026]**: Verified and fixed all my preprocessing scripts. Replaced Delta lat and long with absolute versions of them in the features.
+            <br>/</br>
