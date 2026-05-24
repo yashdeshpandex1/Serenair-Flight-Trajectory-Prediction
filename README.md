@@ -14,6 +14,12 @@ Retrieves data from OpenSky api to predict flight trajectory.
 
 <br></br>
 
+### Training:
+- Created an npz file for rnn training of window size = 10 where X has features: [] and y has target columns: []. Anchor is for reference point, since we are predicting delta coordinates rather than the absolute ones.
+- Used dataloaders from pytorch and device = cuda enabled. Experiment tracking is done via MLFlow on Azure ML Workspace and sqlite if the user doesn't have access.
+- 
+
+
 ### Deployment:
 - I created a postgreSQL database on Azure.
   configuration: Burstable, B1ms, 1 vCores, 2 GiB RAM, 32 GiB storage. I found this low-end resource ideal for this project.
