@@ -17,7 +17,7 @@ Retrieves data from OpenSky api to predict flight trajectory.
 ### Training:
 - Created an npz file for rnn training of window size = 10 where X has features: [] and y has target columns: []. Anchor is for reference point, since we are predicting delta coordinates rather than the absolute ones.
 - Used dataloaders from pytorch and device = cuda enabled. Experiment tracking is done via MLFlow on Azure ML Workspace and sqlite if the user doesn't have access.
-- 
+- Created a custom loss function (Haversine formula) to calculate distance between two points on Earth.
 
 
 ### Deployment:
