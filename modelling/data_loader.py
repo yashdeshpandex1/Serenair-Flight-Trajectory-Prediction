@@ -26,21 +26,19 @@ def load_npz(path='./flight_data_for_rnn.npz'):
 
 
 def dataloader():
-    """utilizes dataloader in pytorch as well as cuda.
+    """utilizes dataloader in pytorch.
 
     Returns:
         train_ds, test_ds, train_loader and test_loader.
     """
     X_train, y_train, anchor_train, X_test, y_test, anchor_test = load_npz()
     
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    
-    X_train = torch.tensor(X_train, dtype=torch.float32).to(device)
-    y_train = torch.tensor(y_train, dtype=torch.float32).to(device)
-    anchor_train = torch.tensor(anchor_train, dtype=torch.float32).to(device)
-    X_test = torch.tensor(X_test, dtype=torch.float32).to(device)
-    y_test = torch.tensor(y_test, dtype=torch.float32).to(device)
-    anchor_test = torch.tensor(anchor_test, dtype=torch.float32).to(device)
+    X_train = torch.tensor(X_train, dtype=torch.float32)
+    y_train = torch.tensor(y_train, dtype=torch.float32)
+    anchor_train = torch.tensor(anchor_train, dtype=torch.float32)
+    X_test = torch.tensor(X_test, dtype=torch.float32)
+    y_test = torch.tensor(y_test, dtype=torch.float32)
+    anchor_test = torch.tensor(anchor_test, dtype=torch.float32)
     
     train_ds = TensorDataset(X_train, y_train, anchor_train)
     test_ds = TensorDataset(X_test, y_test, anchor_test)

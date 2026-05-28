@@ -28,6 +28,11 @@ def group_shuffle_split(df: pd.DataFrame) -> pd.DataFrame:
 def scale_dataset(df_train, df_test, features) -> pd.DataFrame:
     """Scales features as well as target variables.
     """
+    df_train['raw_latitude'] = df_train['latitude']
+    df_train['raw_longitude'] = df_train['longitude']
+    df_test['raw_latitude'] = df_test['latitude']
+    df_test['raw_longitude'] = df_test['longitude']
+    
     feature_scaler = StandardScaler() # Create instance of scalar
      
     # fit and transform on training set

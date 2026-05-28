@@ -53,7 +53,7 @@ def prepare_rnn_data(X, y, anchors, groups, window_size=10):
 
 def save_sequences(train_df, test_df, features, target, window_size=10):
     
-    anchor_cols = ['latitude', 'longitude']
+    anchor_cols = ['raw_latitude', 'raw_longitude']
     
     X_train_seq, y_train_seq, anchor_train_seq = prepare_rnn_data(
         X = train_df[features].values,
