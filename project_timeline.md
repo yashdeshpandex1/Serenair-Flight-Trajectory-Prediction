@@ -25,5 +25,6 @@
 **[24/5/2026]**: Created a dataloaders script for model training.
             <br></br>
 **[26/5/2026]**: Created a custom loss function (Haversine distance formula) after researching as well as verification. I thought Haversine was 
-            a sound choice because other commonly used loss functions don't take Earth's spherical nature into account.
+            a sound choice because other commonly used loss functions don't take Earth's spherical nature into account. Also, created a 
+            simple LSTM model.
             <br></br>
