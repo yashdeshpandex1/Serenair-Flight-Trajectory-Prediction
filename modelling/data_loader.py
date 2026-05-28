@@ -48,3 +48,6 @@ def dataloader():
     test_loader = DataLoader(test_ds, batch_size=64, shuffle=False)
     
     return train_ds, test_ds, train_loader, test_loader
+
+if __name__ == "__main__":
+    dataloader()
