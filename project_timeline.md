@@ -31,3 +31,6 @@
 **[28/5/2026]**: Created engine.py for modular training, model initialisation and testing. Fixed a bug where in anchor logic, scaled lat and lon were 
             fed to delta coordinates and it would lead to model not learning anything.
             <br></br>
+**[29/5/2026]**: Refactored the code to move data processing scripts from modelling/ to preprocessing.
+            Documented some of the scripts and switched to pathlib to navigate through file structure.
+            <br></br>
