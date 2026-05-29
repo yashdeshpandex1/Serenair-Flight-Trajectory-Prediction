@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import numpy as np
+from pathlib import Path
 
 def create_sequences(flight_X, flight_y, flight_anchor, window_size=10):
     """
@@ -71,7 +72,11 @@ def save_sequences(train_df, test_df, features, target, window_size=10):
         window_size = window_size
     )
     
-    np.savez_compressed('flight_data_for_rnn.npz',
+    data_dir = Path('../data/rnn_data/')
+    data_dir.mkdir(parents=True, exist_ok=True)
+    save_path = data_dir / 'flight_data_for_rnn.npz'
+    
+    np.savez_compressed(save_path,
                         X_train = X_train_seq,
                         y_train = y_train_seq,
                         anchor_train = anchor_train_seq,

@@ -40,35 +40,43 @@ def training_loop(num_epochs=10,
         model.train()
         train_loss = 0.0
         
+        # Unpack batch_X, batch_y, batch_anchor and send to 'device' batch-wise
         for batch_X, batch_y, batch_anchor in train_loader:
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
             batch_anchor = batch_anchor.to(device)
             
+            # Make predictions
             pred = model(batch_X)
             
+            # Calculate loss
             loss = criterion(pred, batch_y, batch_anchor)
             
+            # Backward pass
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm(model.parameters(), max_norm=1.0)
             optimizer.step()
             
+            # Add to training loss
             train_loss += loss.item()
             
         # Testing
         model.eval()
         test_loss = 0.0
         with torch.inference_mode():
+            # Unpack batch_X, batch_y and batch_anchor and send to 'device' batch-wise
             for batch_X, batch_y, batch_anchor in test_loader:
                 batch_X = batch_X.to(device)
                 batch_y = batch_y.to(device)
                 batch_anchor = batch_anchor.to(device)
                 
+                # Make predictions, calculate loss and and sum them up.
                 pred = model(batch_X)
                 batch_loss = criterion(pred, batch_y, batch_anchor)
                 test_loss += batch_loss.item()
-                
+          
+        # Finally, calculate average training loss and testing loss      
         avg_train = train_loss / len(train_loader)
         avg_test = test_loss / len(test_loader)
         
