@@ -28,3 +28,6 @@
             a sound choice because other commonly used loss functions don't take Earth's spherical nature into account. Also, created a 
             simple LSTM model.
             <br></br>
+**[28/5/2026]**: Created engine.py for modular training, model initialisation and testing. Fixed a bug where in anchor logic, scaled lat and lon were 
+            fed to delta coordinates and it would lead to model not learning anything.
+            <br></br>
