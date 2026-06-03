@@ -50,4 +50,9 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     # This will be our target variables
     df['delta_latitude'] = df.groupby('icao24')['latitude'].diff().fillna(0)
     df['delta_longitude'] = df.groupby('icao24')['longitude'].diff().fillna(0)
+    
+    # Transponder gap > 60 seconds for consistency
+    df = df[df['delta_time'] <= 60]
+    df = df.dropna(subset=['delta_latitude', 'delta_longitude', 'delta_time'])
+    
     return df

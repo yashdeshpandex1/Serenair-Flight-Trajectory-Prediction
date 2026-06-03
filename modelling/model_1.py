@@ -18,8 +18,6 @@ class model1(nn.Module):
         # Output Layer
         self.fc = nn.Linear(hidden_size, output_size)
         
-        nn.init.uniform_(self.fc.weight, -0.001, 0.001)
-        nn.init.zeros_(self.fc.bias)
         
         
     def forward(self, X):

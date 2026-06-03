@@ -27,8 +27,6 @@ class HaversineLoss(nn.Module):
             torch.cos(lat1) * torch.cos(lat2) * \
                 torch.sin((lon2-lon1)/2)**2
                 
-        # prevent NaN gradients during Backpropagation
-        d = torch.clamp(d, 1e-7, 1.0 - 1e-7)
         
         # Calculate final physical distance and return the mean
         distances = 2 * self.R * torch.asin(torch.sqrt(d))
