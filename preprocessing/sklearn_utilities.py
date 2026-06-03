@@ -4,7 +4,7 @@
 import pandas as pd # Dataframe operations
 # import GroupShuffleSplit from sklearn
 from sklearn.model_selection import GroupShuffleSplit 
-from sklearn.preprocessing import StandardScaler # import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler # import StandardScaler
 
 
 # Since our dataset has groups of different aircrafts
@@ -25,7 +25,7 @@ def group_shuffle_split(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # Scale input variables
-def scale_dataset(df_train, df_test, features) -> pd.DataFrame:
+def scale_dataset(df_train, df_test, features, target) -> pd.DataFrame:
     """Scales features as well as target variables.
     """
     df_train['raw_latitude'] = df_train['latitude']
@@ -34,10 +34,14 @@ def scale_dataset(df_train, df_test, features) -> pd.DataFrame:
     df_test['raw_longitude'] = df_test['longitude']
     
     feature_scaler = StandardScaler() # Create instance of scalar
-     
+    target_scaler = RobustScaler()
+    
     # fit and transform on training set
     df_train[features] = feature_scaler.fit_transform(df_train[features])
     # only transform on test set
     df_test[features] = feature_scaler.transform(df_test[features])
     
-    return df_train, df_test, feature_scaler
+    df_train[target] = target_scaler.fit_transform(df_train[target])
+    df_test[target] = target_scaler.transform(df_test[target])
+    
+    return df_train, df_test, feature_scaler, target_scaler

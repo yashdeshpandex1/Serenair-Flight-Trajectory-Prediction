@@ -19,12 +19,15 @@ def prep_data(path='../data/opensky_raw.csv'):
     features, target = initialise_features_and_target() # features and target
 
     training_set, testing_set = group_shuffle_split(df=df_engineered) # shuffle split
-    df_train, df_test, feature_scaler = scale_dataset(training_set, testing_set, features) # dataset scaling
+    df_train, df_test, feature_scaler, target_scaler = scale_dataset(training_set, testing_set, features, target) # dataset scaling
 
     save_sequences(df_train, df_test, features, target)
     
     scaler_path = save_dir/'feature_scaler.joblib'
+    target_path = save_dir/'target_scaler.joblib'
+    
     joblib.dump(feature_scaler, scaler_path)
+    joblib.dump(target_scaler, target_path)
 
 if __name__ == "__main__":
     prep_data()
