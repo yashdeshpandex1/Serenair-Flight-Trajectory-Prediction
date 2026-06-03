@@ -21,30 +21,24 @@ def create_sequences(flight_X, flight_y, flight_anchor, window_size=10):
         
     return np.array(X_seq), np.array(y_seq), np.array(anchor_seq)
 
-def prepare_rnn_data(X, y, anchors, groups, window_size=10):
+
+def prepare_rnn_data(df, features, target, anchor_cols, window_size=10):
     """
     Builds up on create_sequences function to further
     create the desired RNN dataset for our models.
     """
     all_X, all_y, all_anchors = [], [], []
     
-    # return unique flights for tqdm bar
-    unique_flights, start_indices = np.unique(groups, return_index=True) 
-    
-    # define the start indices
-    start_indices = np.append(start_indices, len(groups))
-    
-    for i in tqdm(range(len(unique_flights)), desc='Extracting Flight Sequences...'):
-        start_idx = start_indices[i] # here's the starting point a particular sequence
-        end_idx = start_indices[i+1] # ending point of the same
+    for _, flight_data in tqdm(df.groupby('icao24'), desc='Extracting Flight Sequences'):
         
-        flight_X = X[start_idx: end_idx] # create X seq
-        flight_y = y[start_idx: end_idx] # create y seq
-        flight_anchor = anchors[start_idx: end_idx] # ref anchor
+        flight_data = flight_data.sort_values(by='timestamp')
         
-        # apply create_sequences function
+        flight_X = flight_data[features].values
+        flight_y = flight_data[target].values
+        flight_anchor = flight_data[anchor_cols].values
+        
         if len(flight_X) > window_size:
-            X_s, y_s, anchor_s = create_sequences(flight_X, flight_y, flight_anchor, window_size)
+            X_s, y_s, anchor_s = create_sequences(flight_X, flight_y, flight_anchor, window_size=10)
             all_X.append(X_s)
             all_y.append(y_s)
             all_anchors.append(anchor_s)
@@ -52,24 +46,25 @@ def prepare_rnn_data(X, y, anchors, groups, window_size=10):
     # return X, y and anchors        
     return np.vstack(all_X), np.vstack(all_y), np.vstack(all_anchors)
 
+
 def save_sequences(train_df, test_df, features, target, window_size=10):
     
     anchor_cols = ['raw_latitude', 'raw_longitude']
     
     X_train_seq, y_train_seq, anchor_train_seq = prepare_rnn_data(
-        X = train_df[features].values,
-        y = train_df[target].values,
-        anchors = train_df[anchor_cols].values,
-        groups = train_df['icao24'].values,
-        window_size = window_size
+        df=train_df,
+        features=features,
+        target=target,
+        anchor_cols=anchor_cols,
+        window_size=window_size
     )
     
     X_test_seq, y_test_seq, anchor_test_seq = prepare_rnn_data(
-        X = test_df[features].values,
-        y = test_df[target].values,
-        anchors = test_df[anchor_cols].values,
-        groups = test_df['icao24'].values,
-        window_size = window_size
+        df=test_df,
+        features=features,
+        target=target,
+        anchor_cols=anchor_cols,
+        window_size=window_size
     )
     
     data_dir = Path('../data/rnn_data/')
