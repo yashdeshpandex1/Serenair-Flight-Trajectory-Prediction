@@ -8,11 +8,12 @@ from tqdm.auto import tqdm
 import joblib
 
 
-def training_loop(num_epochs=10,
+def training_loop(model_class='lstmV2',
+                  num_epochs=10,
                   train_loss_fn=nn.MSELoss, 
                   eval_loss_fn=HaversineLoss,
                   optimize=torch.optim.Adam, 
-                  learning_rate=0.001,
+                  learning_rate=0.0001,
                   wd=1e-5):
     """performs training and testing on the model provided in run_experiment.
 
@@ -29,7 +30,7 @@ def training_loop(num_epochs=10,
     # Set the default device to be cuda
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # Use the model provided in run_experiment
-    model = run_experiment()
+    model = run_experiment(model_name=model_class)
     # Use the loss function (Haversine Loss is the default)
     train_criterion = train_loss_fn()
     eval_criterion = eval_loss_fn()
@@ -100,6 +101,7 @@ def training_loop(num_epochs=10,
         # Finally, calculate average training loss and testing loss      
         avg_train = train_meters_loss / len(train_loader)
         avg_test = test_meters_loss / len(test_loader)
+    
         
         print(f"Epoch [{epoch+1}/{num_epochs}] | Train Loss: {avg_train:.2f} meters | Test Loss: {avg_test:.2f} meters")
 
