@@ -21,6 +21,7 @@ class LSTMModelV2(nn.Module):
         
         self.fc1 = nn.Linear(hidden_size, 64)   # first fully connected layer
         self.fc2 = nn.Linear(64, output_size)   # second fully connected layer
+        
         self.relu = nn.ReLU()    # ReLU activation
         self.dropout = nn.Dropout(dropout_rate)  # dropout
         
