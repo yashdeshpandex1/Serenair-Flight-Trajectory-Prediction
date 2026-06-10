@@ -24,12 +24,12 @@ class GRUModel(nn.Module):
         """X: input of shape (batch_size, seq_length, input_size)."""
         
         # GRU returns (output, h_n)
-        gru_out, h_n = self.gru(X)
+        gru_out, _ = self.gru(X)
         
         # Take the output from the last time step
         last_output = gru_out[:, -1, :]
         
-        # lstm layers * 2-> fc1 -> relu -> dropout -> fc2 -> output
+        # GRU layers * 2-> fc1 -> relu -> dropout -> fc2 -> output
         x = self.dropout(self.relu(self.fc1(last_output)))
         output = self.fc2(x)
         

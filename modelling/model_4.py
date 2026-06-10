@@ -31,13 +31,13 @@ class BidirectionalLSTMModelV1(nn.Module):
         """X: input of shape (batch_size, seq_length, input_size)."""
         
         # LSTM returns (output, (h_n, c_n))
-        lstm_out, (h_n, c_n) = self.lstm(X)
+        lstm_out, (h_n, _) = self.lstm(X)
         
         # Take mature outputs from both forward and backward pass (bidirectional)
         forward_hidden = h_n[-2, :, :]
         backward_hidden = h_n[-1, :, :]
         
-        # Take the output from the last time step
+        # Concat forward and backward output to get the output
         last_output = torch.cat((forward_hidden, backward_hidden), dim=1)
         
         # bidirectional lstm layers * 2 -> fc1 -> relu -> dropout -> fc2 -> output
