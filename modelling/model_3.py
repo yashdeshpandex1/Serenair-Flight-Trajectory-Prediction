@@ -29,7 +29,7 @@ class GRUModel(nn.Module):
         # Take the output from the last time step
         last_output = gru_out[:, -1, :]
         
-        # lstm layers -> fc1 -> relu -> dropout -> fc2 -> output
+        # lstm layers * 2-> fc1 -> relu -> dropout -> fc2 -> output
         x = self.dropout(self.relu(self.fc1(last_output)))
         output = self.fc2(x)
         

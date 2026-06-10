@@ -40,7 +40,7 @@ class BidirectionalLSTMModelV1(nn.Module):
         # Take the output from the last time step
         last_output = torch.cat((forward_hidden, backward_hidden), dim=1)
         
-        # bidirectional lstm layers -> fc1 -> relu -> dropout -> fc2 -> output
+        # bidirectional lstm layers * 2 -> fc1 -> relu -> dropout -> fc2 -> output
         x = self.dropout(self.relu(self.fc1(last_output)))
         output = self.fc2(x)
         

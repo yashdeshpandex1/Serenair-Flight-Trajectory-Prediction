@@ -29,7 +29,7 @@ class LSTMModelV1(nn.Module):
         # Take the output from the last time step
         last_output = lstm_out[:, -1, :]
         
-        # finally, pass it through the fully connected layer
+        # lstm layer -> fc -> output
         output = self.fc(last_output)
         
         return output
