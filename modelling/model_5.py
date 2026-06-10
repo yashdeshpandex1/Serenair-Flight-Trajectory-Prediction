@@ -15,7 +15,7 @@ class HybridConvLSTMModelV1(nn.Module):
         self.relu = nn.ReLU()   # relu activation
         
         # LSTM Layer
-        self.lstm = nn.LSTM(input_size=input_size,
+        self.lstm = nn.LSTM(input_size=64,
                             hidden_size=hidden_size,
                             num_layers=num_layers,
                             batch_first=True,
