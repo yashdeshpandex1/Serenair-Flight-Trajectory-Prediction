@@ -1,24 +1,35 @@
 import torch 
 import torch.nn as nn
-from model_1 import model1
+from model_1 import LSTMModelV1
 from model_2 import LSTMModelV2
+from model_3 import GRUModel
+from model_4 import BidirectionalLSTMModelV1
+from model_5 import HybridConvLSTMModelV1
+from model_6 import HybridConvLSTMModelV2
+from model_7 import HybridConvLSTMV3
+from model_8 import HybridConvLSTMBidirectionalModel
+from model_9 import AttentionModel
+from model_10 import HybridConvAttentionGRUModel
 
 MODEL_REGISTRY = {
-    'lstmV1': model1,
-    'lstmV2': LSTMModelV2
+    'LSTMModelV1': LSTMModelV1,
+    'LSTMModelV2': LSTMModelV2,
+    'GRUV1': GRUModel,
+    'BidirectionalLSTMV1': BidirectionalLSTMModelV1,
+    'HybridConvLSTMV1': HybridConvLSTMModelV1,
+    'HybridConvLSTMV2':  HybridConvLSTMModelV2,
+    'HybridConvLSTMV3': HybridConvLSTMV3,
+    'HybridConvLSTMBidirectional': HybridConvLSTMBidirectionalModel,
+    'AttentionModel': AttentionModel,
+    'HybridConvAttentionGRUModel': HybridConvAttentionGRUModel
 }
 
-def run_experiment(model_name='lstmV2', hidden_size=32, lr=0.001):
+def run_experiment(model_name, hidden_size=128):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
-    if model_name == 'lstmV1':
-        model_class = MODEL_REGISTRY[model_name]
-        model = model_class(input_size=11, hidden_size=hidden_size,
+    model_class = MODEL_REGISTRY[model_name]
+    model = model_class(input_size=13, hidden_size=hidden_size,
                         output_size=2).to(device)
     
-    if model_name == 'lstmV2':
-        model_class = MODEL_REGISTRY[model_name]
-        model = model_class(input_size=11, hidden_size=128,
-                            output_size=2, num_layers=3).to(device)
-        
     return model
+
