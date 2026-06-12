@@ -6,105 +6,157 @@ from data_loader import dataloader
 from custom_loss_fn import HaversineLoss
 from tqdm.auto import tqdm
 import joblib
+import mlflow
+from setup_mlflow import setup_mlflow
+from scaler_utilities import get_unscaled
+import copy
 
 
-def training_loop(model_class='lstmV2',
-                  num_epochs=10,
-                  train_loss_fn=nn.MSELoss, 
-                  eval_loss_fn=HaversineLoss,
-                  optimize=torch.optim.Adam, 
-                  learning_rate=0.0001,
-                  wd=1e-5):
-    """performs training and testing on the model provided in run_experiment.
+def evaluate(model, val_loader, eval_criterion,
+             target_mean, target_scale, device):
+    
+    criterion = eval_criterion()
 
-    Args:
-        num_epochs (int, optional): Number of epochs. Defaults to 10.
-        loss_fn (_type_, optional): Loss function to be selected. Defaults to HaversineLoss.
-        optimize (_type_, optional): Optimizer to be selected. Defaults to torch.optim.Adam.
-        learning_rate (float, optional): Learning rate for gradient descent. Defaults to 0.001.
-        wd (_type_, optional): weight decay. Defaults to 1e-5.
-    """
+    target_mean = target_mean.to(device)
+    target_scale = target_scale.to(device)
     
-    # Load train_loader and test loader
-    _, _, train_loader, test_loader = dataloader()
-    # Set the default device to be cuda
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    # Use the model provided in run_experiment
-    model = run_experiment(model_name=model_class)
-    # Use the loss function (Haversine Loss is the default)
-    train_criterion = train_loss_fn()
-    eval_criterion = eval_loss_fn()
+    model.eval()
+    val_meters_loss = 0.0
     
-    # Optimizer to be used (default: Adam)
-    optimizer = optimize(model.parameters(), lr=learning_rate, 
-                         weight_decay=wd)
-    
-    #
-    target_scaler = joblib.load('../data/rnn_data/target_scaler.joblib')
-    target_mean = torch.tensor(target_scaler.center_, dtype=torch.float32).to(device)
-    target_scale = torch.tensor(target_scaler.scale_, dtype=torch.float32).to(device)
-    
-    for epoch in tqdm(range(num_epochs)):
-        # Training
-        model.train()
-        train_meters_loss = 0.0
-        
-        # Unpack batch_X, batch_y, batch_anchor and send to 'device' batch-wise
-        for batch_X, batch_y, batch_anchor in train_loader:
+    with torch.inference_mode():
+        for batch_X, batch_y, batch_anchor in val_loader:
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
             batch_anchor = batch_anchor.to(device)
             
-            # Make predictions
-            pred = model(batch_X)
+            output = model(batch_X)
+            pred = output[0] if isinstance(output, tuple) else output
             
-            # Calculate loss
-            train_loss = train_criterion(pred, batch_y)
+            unscaled_pred = (pred * target_scale) + target_mean
+            unscaled_y = (batch_y * target_scale) + target_mean
             
-            # Backward pass
-            optimizer.zero_grad()
-            train_loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            optimizer.step()
+            abs_pred = unscaled_pred + batch_anchor
+            abs_y = unscaled_y + batch_anchor
             
-            with torch.no_grad():
-                unscaled_pred = (pred * target_scale) + target_mean
-                unscaled_y = (batch_y * target_scale) + target_mean
-                abs_pred = unscaled_pred + batch_anchor
-                abs_y = unscaled_y + batch_anchor
-                
-                training_error = eval_criterion(abs_pred, abs_y)
-                train_meters_loss += training_error.item()
+            val_error = criterion(abs_pred, abs_y)
+            val_meters_loss += val_error.item()
+            
+    return val_meters_loss / len(val_loader)
 
-            
-        # Testing
-        model.eval()
-        test_meters_loss = 0.0
-        with torch.inference_mode():
-            # Unpack batch_X, batch_y and batch_anchor and send to 'device' batch-wise
-            for batch_X, batch_y, batch_anchor in test_loader:
-                batch_X = batch_X.to(device)
-                batch_y = batch_y.to(device)
-                batch_anchor = batch_anchor.to(device)
-                
-                # Make predictions, calculate loss and and sum them up.
-                pred = model(batch_X)
-                
-                unscaled_pred = (pred * target_scale) + target_mean
-                unscaled_y = (batch_y * target_scale) + target_mean
-                abs_pred = unscaled_pred + batch_anchor
-                abs_y = unscaled_y + batch_anchor
-                
-                test_error = eval_criterion(abs_pred, abs_y)
-                test_meters_loss += test_error.item()
-          
-        # Finally, calculate average training loss and testing loss      
-        avg_train = train_meters_loss / len(train_loader)
-        avg_test = test_meters_loss / len(test_loader)
+
+def train(model, train_loader, train_criterion, eval_criterion,
+          device, target_mean, target_scale, optimizer):
+    """"""
+    model.train()
+    train_loss_meters = 0.0
     
+    for batch_X, batch_y, batch_anchor in train_loader:
+        batch_X = batch_X.to(device)
+        batch_y = batch_y.to(device)
+        batch_anchor = batch_anchor.to(device)
         
-        print(f"Epoch [{epoch+1}/{num_epochs}] | Train Loss: {avg_train:.2f} meters | Test Loss: {avg_test:.2f} meters")
+        output = model(batch_X)
+        pred = output[0] if isinstance(output, tuple) else output
+        
+        loss = train_criterion(pred, batch_y)
+        
+        optimizer.zero_grad()
+        loss.backward()
+        
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+        
+        with torch.no_grad():
+            unscaled_pred = (pred * target_scale) + target_mean
+            unscaled_y = (batch_y * target_scale) + target_mean
+            
+            abs_pred = unscaled_pred + batch_anchor
+            abs_y = unscaled_y + batch_anchor
+            
+            batch_error = eval_criterion(abs_pred, abs_y)
+            train_loss_meters += batch_error.item()
+        
+    return train_loss_meters/ len(train_loader)
 
-
-if __name__ == "__main__":
-    training_loop()
+    
+def training_loop(model_class, num_epochs=10,
+                  train_loss_fn=nn.MSELoss, eval_loss_fn=HaversineLoss,
+                  optimize=torch.optim.Adam, learning_rate=0.0001, wd=0.0):
+    
+    setup_mlflow()
+    _, _, train_loader, val_loader = dataloader()
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    target_mean, target_scale = get_unscaled()
+    target_mean = target_mean.to(device)
+    target_scale = target_scale.to(device)
+    
+    model = run_experiment(model_name=model_class)
+    model = model.to(device)
+    
+    train_criterion = train_loss_fn()
+    eval_criterion = eval_loss_fn()
+    
+    optimizer = optimize(model.parameters(), lr=learning_rate, weight_decay=wd)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='min', factor=0.5, patience=5
+    )
+    
+    with mlflow.start_run(run_name=model_class):
+        
+        mlflow.log_params({
+            'model_architecture': model_class,
+            'epochs': num_epochs,
+            'learning_rate': learning_rate,
+            'weight_decay': wd,
+            'optimizer': optimize.__name__,
+            'train_loss_function': train_loss_fn.__name__
+        })
+        print(f"Mlflow started tracking {model_class}")
+        
+        best_val_loss = float('inf')
+        best_model_weights = None
+        
+        for epoch in tqdm(range(num_epochs), desc='Training Progress'):
+            
+            avg_train = train(
+                model=model,
+                train_loader=train_loader,
+                train_criterion=train_criterion, 
+                eval_criterion=eval_criterion,
+                device=device, 
+                target_mean=target_mean, 
+                target_scale=target_scale, 
+                optimizer=optimizer
+            )
+            
+            avg_val = evaluate(
+                model=model,
+                val_loader=val_loader, 
+                eval_criterion=eval_loss_fn,
+                target_mean=target_mean, 
+                target_scale=target_scale, 
+                device=device
+            )
+            
+            scheduler.step(avg_val)
+            
+            mlflow.log_metrics({
+                'train_meters': avg_train,
+                'val_haversine_meters': avg_val,
+                'learning_rate': optimizer.param_groups[0]['lr']   
+            }, step=epoch)
+            
+            if avg_val < best_val_loss:
+                best_val_loss = avg_val
+                best_model_weights = copy.deepcopy(model.state_dict())
+        
+        if best_model_weights is not None:
+            model.load_state_dict(best_model_weights)
+            
+        mlflow.pytorch.log_model(model, artifact_path='models',
+                                 registered_model_name=model_class)
+        
+        print(f'Run complete. {model_class} saved securely to MLflow.')
+            
+            
