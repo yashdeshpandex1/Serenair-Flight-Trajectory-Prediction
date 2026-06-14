@@ -25,7 +25,7 @@ def load_npz(path='../data/rnn_data/flight_data_for_rnn.npz'):
     return X_train, y_train, anchor_train, X_test, y_test, anchor_test
 
 
-def dataloader():
+def dataloader(batch_size=64):
     """utilizes dataloader in pytorch.
 
     Returns:
@@ -42,8 +42,8 @@ def dataloader():
     
     train_ds = TensorDataset(X_train, y_train, anchor_train)
     test_ds = TensorDataset(X_test, y_test, anchor_test)
-    train_loader = DataLoader(train_ds, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_ds, batch_size=64, shuffle=False)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
     
     return train_ds, test_ds, train_loader, test_loader
 

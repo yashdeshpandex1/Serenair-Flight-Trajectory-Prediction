@@ -5,7 +5,7 @@ class HybridConvLSTMBidirectionalModel(nn.Module):
     """A Hybrid (Conv + Bidirectional LSTM) Model with 
         two fully connected layers and a skip connection."""
     def __init__(self, input_size, hidden_size,
-                 output_size, num_layers=2, dropout_rate=0.2):
+                 output_size, num_layers, dropout_rate=0.2):
         super(HybridConvLSTMBidirectionalModel, self).__init__()
         
         # Conv Layer

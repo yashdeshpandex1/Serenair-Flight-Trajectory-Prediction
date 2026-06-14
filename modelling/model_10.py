@@ -24,7 +24,7 @@ class TemporalAttention(nn.Module):
 class HybridConvAttentionGRUModel(nn.Module):
     """A Hybrid Conv + GRU + Attention Model with two fully connected layers."""
     def __init__(self, input_size, hidden_size,
-                 output_size, num_layers=2, dropout_rate=0.2):
+                 output_size, num_layers, dropout_rate=0.2):
         super(HybridConvAttentionGRUModel, self).__init__()
         
         # Conv Layer

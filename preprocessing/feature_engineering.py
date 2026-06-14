@@ -55,4 +55,11 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df = df[df['delta_time'] <= 60]
     df = df.dropna(subset=['delta_latitude', 'delta_longitude', 'delta_time'])
     
+    df['step_dlat'] = df.groupby('icao24')['latitude'].diff().fillna(0)
+    df['step_dlon'] = df.groupby('icao24')['longitude'].diff().fillna(0)
+
+    df['euclidean_speed'] = np.sqrt(df['step_dlat']**2 + df['step_dlon']**2)
+    
+    df['bearing'] = np.arctan2(df['step_dlon'], df['step_dlat'])
+    
     return df

@@ -5,7 +5,7 @@ class HybridConvLSTMV3(nn.Module):
     """A Hybrid Conv + LSTM Layer model with two fully connected
        layer and skip connection."""
     def __init__(self, input_size, hidden_size,
-                 output_size, num_layers=2, dropout_rate=0.2):
+                 output_size, num_layers, dropout_rate=0.2):
         super(HybridConvLSTMV3, self).__init__()
         
         # Conv1 Layer

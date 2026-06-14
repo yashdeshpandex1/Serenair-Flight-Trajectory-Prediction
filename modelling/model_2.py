@@ -2,10 +2,10 @@ import torch.nn as nn
 import torch
 
 class LSTMModelV2(nn.Module):
-    """A Two Layered LSTM model with two fully connected layers."""
+    """A LSTM model with two fully connected layers."""
     def __init__(self, input_size,
                  hidden_size, output_size,
-                 num_layers=2, dropout_rate=0.2):
+                 num_layers, dropout_rate=0.2):
         super(LSTMModelV2, self).__init__()
         
         # Model Specifications

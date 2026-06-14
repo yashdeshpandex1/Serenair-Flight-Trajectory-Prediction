@@ -6,11 +6,12 @@ from data_loader import dataloader
 from custom_loss_fn import HaversineLoss
 from tqdm.auto import tqdm
 import joblib
+import os
 import mlflow
 from setup_mlflow import setup_mlflow
 from scaler_utilities import get_unscaled
 import copy
-
+import argparse 
 
 def evaluate(model, val_loader, eval_criterion,
              target_mean, target_scale, device):
@@ -81,18 +82,21 @@ def train(model, train_loader, train_criterion, eval_criterion,
     
 def training_loop(model_class, num_epochs=10,
                   train_loss_fn=nn.MSELoss, eval_loss_fn=HaversineLoss,
-                  optimize=torch.optim.Adam, learning_rate=0.0001, wd=0.0):
-    
+                  optimize=torch.optim.Adam, learning_rate=0.001, wd=0.0, 
+                  num_layers=2, batch_size=64):
     setup_mlflow()
-    _, _, train_loader, val_loader = dataloader()
+    _, _, train_loader, val_loader = dataloader(batch_size=batch_size)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     target_mean, target_scale = get_unscaled()
     target_mean = target_mean.to(device)
     target_scale = target_scale.to(device)
     
-    model = run_experiment(model_name=model_class)
+    model = run_experiment(model_name=model_class, num_layers=num_layers)
     model = model.to(device)
+    
+    if device == 'cuda':
+        model = torch.compile(model, mode='reduce-overhead')
     
     train_criterion = train_loss_fn()
     eval_criterion = eval_loss_fn()
@@ -107,6 +111,7 @@ def training_loop(model_class, num_epochs=10,
         mlflow.log_params({
             'model_architecture': model_class,
             'epochs': num_epochs,
+            'num_of_layers': num_layers,
             'learning_rate': learning_rate,
             'weight_decay': wd,
             'optimizer': optimize.__name__,
@@ -117,7 +122,9 @@ def training_loop(model_class, num_epochs=10,
         best_val_loss = float('inf')
         best_model_weights = None
         
-        for epoch in tqdm(range(num_epochs), desc='Training Progress'):
+        epoch_iterator = tqdm(range(num_epochs), desc='Training Progress')
+        
+        for epoch in epoch_iterator:
             
             avg_train = train(
                 model=model,
@@ -147,16 +154,49 @@ def training_loop(model_class, num_epochs=10,
                 'learning_rate': optimizer.param_groups[0]['lr']   
             }, step=epoch)
             
+            epoch_iterator.set_postfix({
+                'Train': f"{avg_train:.2f} meters",
+                'Val': f"{avg_val:.2f} meters",
+                'LR': f"{optimizer.param_groups[0]['lr']:.6g}"
+            })
+            
             if avg_val < best_val_loss:
                 best_val_loss = avg_val
                 best_model_weights = copy.deepcopy(model.state_dict())
+
+                tqdm.write(f"Epoch {epoch} | New Best Val Loss: {best_val_loss:.2f} meters")
         
         if best_model_weights is not None:
             model.load_state_dict(best_model_weights)
             
-        mlflow.pytorch.log_model(model, artifact_path='models',
-                                 registered_model_name=model_class)
+        os.makedirs('../models', exist_ok=True)   
+        local_path = f"../models/{model_class}.pth"
+        torch.save(model.state_dict(), local_path)
+        mlflow.log_artifact(local_path, artifact_path='models')
         
         print(f'Run complete. {model_class} saved securely to MLflow.')
-            
-            
+
+if __name__ == '__main__':
+    torch.backends.cudnn.benchmark = True
+    parser = argparse.ArgumentParser(description='Train the model')
+    
+    parser.add_argument('--model_class', type=str, default='LSTMModelV1', help='Name of the model')
+    parser.add_argument('--num_epochs', type=int, default=10, help='Training epochs')
+    parser.add_argument('--wd', type=float, default=0.0, help='Weight decay (L2)')
+    parser.add_argument('--lr', type=float, default=0.0004, help='learning rate')
+    parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size for training and testing set'),
+    parser.add_argument('--optimize', default=torch.optim.Adam, help='optimizer to use')
+
+    
+    args = parser.parse_args()
+    
+    training_loop(
+        model_class=args.model_class,
+        num_epochs=args.num_epochs,
+        learning_rate=args.lr,
+        wd=args.wd,
+        num_layers=args.num_layers,
+        batch_size=args.batch_size,
+        optimize=args.optimize
+    )
