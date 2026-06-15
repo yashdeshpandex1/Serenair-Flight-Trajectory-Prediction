@@ -81,7 +81,7 @@ def train(model, train_loader, train_criterion, eval_criterion,
 
     
 def training_loop(model_class, num_epochs=10,
-                  train_loss_fn=nn.MSELoss, eval_loss_fn=HaversineLoss,
+                  train_loss_fn=nn.HuberLoss, eval_loss_fn=HaversineLoss,
                   optimize=torch.optim.Adam, learning_rate=0.001, wd=0.0, 
                   num_layers=2, batch_size=64):
     setup_mlflow()
@@ -177,7 +177,6 @@ def training_loop(model_class, num_epochs=10,
         print(f'Run complete. {model_class} saved securely to MLflow.')
 
 if __name__ == '__main__':
-    torch.backends.cudnn.benchmark = True
     parser = argparse.ArgumentParser(description='Train the model')
     
     parser.add_argument('--model_class', type=str, default='LSTMModelV1', help='Name of the model')
@@ -186,7 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.0004, help='learning rate')
     parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training and testing set'),
-    parser.add_argument('--optimize', default=torch.optim.Adam, help='optimizer to use')
+    parser.add_argument('--optimize', type=str, default=torch.optim.Adam, help='optimizer to use')
 
     
     args = parser.parse_args()
