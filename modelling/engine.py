@@ -83,7 +83,7 @@ def train(model, train_loader, train_criterion, eval_criterion,
 def training_loop(model_class, num_epochs=10,
                   train_loss_fn=nn.HuberLoss, eval_loss_fn=HaversineLoss,
                   optimize=torch.optim.Adam, learning_rate=0.001, wd=0.0, 
-                  num_layers=2, batch_size=64):
+                  num_layers=2, batch_size=64, hidden_size=64):
     setup_mlflow()
     _, _, train_loader, val_loader = dataloader(batch_size=batch_size)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -92,11 +92,8 @@ def training_loop(model_class, num_epochs=10,
     target_mean = target_mean.to(device)
     target_scale = target_scale.to(device)
     
-    model = run_experiment(model_name=model_class, num_layers=num_layers)
+    model = run_experiment(model_name=model_class, num_layers=num_layers, hidden_size=hidden_size)
     model = model.to(device)
-    
-    if device == 'cuda':
-        model = torch.compile(model, mode='reduce-overhead')
     
     train_criterion = train_loss_fn()
     eval_criterion = eval_loss_fn()
@@ -186,6 +183,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training and testing set'),
     parser.add_argument('--optimize', type=str, default=torch.optim.Adam, help='optimizer to use')
+    parser.add_argument('--hidden_size', type=int, default=64, help='number of hidden neurons')
 
     
     args = parser.parse_args()
@@ -197,5 +195,6 @@ if __name__ == '__main__':
         wd=args.wd,
         num_layers=args.num_layers,
         batch_size=args.batch_size,
-        optimize=args.optimize
+        optimize=args.optimize,
+        hidden_size=args.hidden_size
     )

@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from opensky_api import OpenSkyApi
 from dotenv import load_dotenv
+import argparse
 
 def get_credentials():
     """Returns credentials for OpenSky api."""
@@ -73,3 +74,17 @@ def get_data(frequency=10, name='opensky_raw.csv',
             print(f"Sleeping for {frequency} seconds")
             time.sleep(frequency)
         
+        
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Collect data')
+    
+    parser.add_argument('--frequency', type=int, default=10, help='how often data should be collected')
+    parser.add_argument('--name', type=str, default='opensky_raw.csv', help='file name')
+    parser.add_argument('--limit', type=int, default=1000000, help='number of rows')
+    args = parser.parse_args()
+    
+    get_data(
+        frequency=args.frequency,
+        name=args.name,
+        limit=args.limit
+    )

@@ -38,7 +38,7 @@ def prepare_rnn_data(df, features, target, anchor_cols, window_size=10):
         flight_anchor = flight_data[anchor_cols].values
         
         if len(flight_X) > window_size:
-            X_s, y_s, anchor_s = create_sequences(flight_X, flight_y, flight_anchor, window_size=10)
+            X_s, y_s, anchor_s = create_sequences(flight_X, flight_y, flight_anchor, window_size=window_size)
             all_X.append(X_s)
             all_y.append(y_s)
             all_anchors.append(anchor_s)
@@ -80,3 +80,25 @@ def save_sequences(train_df, test_df, features, target, window_size=10):
                         anchor_test = anchor_test_seq)
     print('Data saved successfully..')
 
+def save_test_sequences(test_df, features, target, window_size=10):
+    
+    anchor_cols = ['raw_latitude', 'raw_longitude']
+    
+    
+    X_test_seq, y_test_seq, anchor_test_seq = prepare_rnn_data(
+        df=test_df,
+        features=features,
+        target=target,
+        anchor_cols=anchor_cols,
+        window_size=window_size
+    )
+    
+    data_dir = Path('../data/rnn_data/')
+    data_dir.mkdir(parents=True, exist_ok=True)
+    save_path = data_dir / 'test_data.npz'
+    
+    np.savez_compressed(save_path,
+                        X_test = X_test_seq,
+                        y_test = y_test_seq,
+                        anchor_test = anchor_test_seq)
+    print('Data saved successfully..')
