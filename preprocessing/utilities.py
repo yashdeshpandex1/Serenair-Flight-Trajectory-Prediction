@@ -45,7 +45,33 @@ def initialise_features_and_target() -> tuple[list[str], list[str]]:
     features = ['velocity', 'vertical_rate', 'baro_altitude',
             'delta_time', 'track_sin', 'track_cos',
             'acceleration', 'turn_rate', 'climb_phase',
-            'hour_sin', 'hour_cos', 'euclidean_speed', 'bearing',
+            'hour_sin', 'hour_cos', 'on_ground', 'cat_Heavy', 
+            'cat_Large', 'cat_Light', 'cat_Medium', 
+            'cat_Small', 'cat_Super', 'temp_kelvin', 
+            'wind_speed', 'wind_dir'
             ]
     
     return features, target
+
+def integrate_weather_data(df_flights, df_weather):
+    print("Fusing both the datasets")
+    df_flights = df_flights.sort_values('timestamp')
+    df_weather = df_weather.sort_values('timestamp')
+    
+    if df_flights['timestamp'].dt.tz is not None:
+        df_flights['timestamp'] = df_flights['timestamp'].dt.tz_localize(None)
+    if df_weather['timestamp'].dt.tz is not None:
+        df_weather['timestamp'] = df_weather['timestamp'].dt.tz_localize(None)
+        
+    df_merged = pd.merge(df_flights, df_weather, on='timestamp', how='outer')
+    df_merged = df_merged.sort_values('timestamp')
+    
+    df_merged = df_merged.set_index('timestamp')
+    df_merged['wind_speed'] = df_merged['wind_speed'].interpolate(method='time')
+    df_merged['wind_dir'] = df_merged['wind_dir'].interpolate(method='time')
+    df_merged['temperature'] = df_merged['temperature'].interpolate(method='time')
+    
+    df_merged = df_merged.reset_index()
+    
+    df_merged = df_merged.dropna(subset=['icao24'])
+    return df_merged

@@ -6,9 +6,12 @@ from pathlib import Path
 from data_cleaning import clean_df
 from feature_engineering import feature_engineering
 from sklearn_utilities import group_shuffle_split, scale_dataset 
-from utilities import sort_values, num_aircrafts, initialise_features_and_target, initialise_df
+from utilities import sort_values, num_aircrafts, \
+    initialise_features_and_target, initialise_df, integrate_weather_data
 from rnn_sequences import save_sequences, save_test_sequences
+from fetch_weather_data import get_weather_data
 import argparse
+import pandas as pd
 
 def prep_train_data(path='../data/opensky_raw.csv'):
     save_dir = Path('../data/rnn_data/') # define where feature scaler will be saved
@@ -16,6 +19,17 @@ def prep_train_data(path='../data/opensky_raw.csv'):
     df = initialise_df(path) # read csv file
     df_sorted = sort_values(df) # sort the dataframe
     df_clean = clean_df(df_sorted) # clean the dataframe
+    df_clean['timestamp'] = pd.to_datetime(df_clean['timestamp'], unit='s')
+    
+    center_lat = df_clean['latitude'].mean()
+    center_lon = df_clean['longitude'].mean()
+    start_date = df_clean['timestamp'].min().strftime('%Y-%m-%d')
+    end_date = (df_clean['timestamp'].max() + pd.Timedetla(days=1)).strftime('%Y-%m-%d')
+    
+    df_weather = get_weather_data(center_lat, center_lon,
+                                  start_date, end_date)
+    df_clean = integrate_weather_data(df_clean, df_weather)
+    
     df_engineered = feature_engineering(df_clean) # feature engineering
     features, target = initialise_features_and_target() # features and target
 

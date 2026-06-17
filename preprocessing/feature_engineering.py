@@ -55,11 +55,28 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df = df[df['delta_time'] <= 60]
     df = df.dropna(subset=['delta_latitude', 'delta_longitude', 'delta_time'])
     
-    df['step_dlat'] = df.groupby('icao24')['latitude'].diff().fillna(0)
-    df['step_dlon'] = df.groupby('icao24')['longitude'].diff().fillna(0)
-
-    df['euclidean_speed'] = np.sqrt(df['step_dlat']**2 + df['step_dlon']**2)
+    df['wind_dir_radians'] = np.deg2rad(df['wind_dir'])
     
-    df['bearing'] = np.arctan2(df['step_dlon'], df['step_dlat'])
+    categories = ['cat_Heavy', 'cat_Large', 'cat_Light', 
+                  'cat_Medium', 'cat_Small', 'cat_Super']
+    for cat in categories:
+        df[cat] = 0.0
+        
+        df.loc[df['category'] == 2, 'cat_Light'] = 1.0
+        df.loc[df['category'] == 3, 'cat_Small'] = 1.0
+        df.loc[df['category'] == 4, 'cat_Large'] = 1.0
+        df.loc[df['category'] == 5, 'cat_Large'] = 1.0  
+        df.loc[df['category'] == 6, 'cat_Heavy'] = 1.0
+        df = df.drop(columns=['category'])
+    else:
+        print("'category' column not found, defaulting aircraft mass to 0")
+            
+    df['temp_kelvin'] = df['temperature'] + 273.15
+    
+    if 'squawk' in df.columns:
+        df['squawk'] = df['squawk'].astype(str)
+        df['is_emergency'] = df['squawk'].isin(['7700', '7600', '7500']).astype(float)
+    else:
+        df['is_emergency'] = 0.0
     
     return df

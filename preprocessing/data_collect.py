@@ -41,13 +41,13 @@ def get_data(frequency=10, name='opensky_raw.csv',
                         s.origin_country, s.time_position, s.longitude, 
                         s.latitude, s.baro_altitude, s.on_ground, s.velocity, 
                         s.true_track, s.vertical_rate, s.geo_altitude,
-                        s.category
+                        s.category, s.squawk
                     ])
 
                 columns = ['icao24', 'callsign', 'origin_country', 
                         'timestamp', 'longitude', 'latitude', 'baro_altitude', 
                         'on_ground', 'velocity', 'true_track', 'vertical_rate', 
-                        'geo_altitude', 'category']
+                        'geo_altitude', 'category', 'squawk']
                 
                 df = pd.DataFrame(vector_data, columns=columns)
                 
