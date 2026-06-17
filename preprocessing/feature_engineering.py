@@ -62,6 +62,8 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     for cat in categories:
         df[cat] = 0.0
         
+    if 'category' in df.columns:
+        df['category'] = pd.to_numeric(df['category'], errors='coerce')    
         df.loc[df['category'] == 2, 'cat_Light'] = 1.0
         df.loc[df['category'] == 3, 'cat_Small'] = 1.0
         df.loc[df['category'] == 4, 'cat_Large'] = 1.0

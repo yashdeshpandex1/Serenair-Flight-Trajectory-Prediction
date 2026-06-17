@@ -24,7 +24,7 @@ def prep_train_data(path='../data/opensky_raw.csv'):
     center_lat = df_clean['latitude'].mean()
     center_lon = df_clean['longitude'].mean()
     start_date = df_clean['timestamp'].min().strftime('%Y-%m-%d')
-    end_date = (df_clean['timestamp'].max() + pd.Timedetla(days=1)).strftime('%Y-%m-%d')
+    end_date = (df_clean['timestamp'].max() + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
     
     df_weather = get_weather_data(center_lat, center_lon,
                                   start_date, end_date)

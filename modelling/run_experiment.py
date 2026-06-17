@@ -28,7 +28,7 @@ def run_experiment(model_name, hidden_size=64, num_layers=2):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     model_class = MODEL_REGISTRY[model_name]
-    model = model_class(input_size=13, hidden_size=hidden_size,
+    model = model_class(input_size=21, hidden_size=hidden_size,
                         num_layers=num_layers, output_size=2).to(device)
     
     return model
