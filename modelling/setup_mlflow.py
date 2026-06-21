@@ -5,9 +5,12 @@ from azure.ai.ml import MLClient
 from azure.identity import DefaultAzureCredential
 
 
-def setup_mlflow():
-    """
-    Sets up mlflow connection.
+def setup_mlflow(task='next_instance'):
+    """Sets up mlflow connection.
+
+    Args:
+        task (str, optional): task name to set up experiment name.
+        Defaults to 'next_instance'.
     """
     
     # Try connecting to mlflow on azure
@@ -21,9 +24,13 @@ def setup_mlflow():
         mlflow.set_tracking_uri("sqlite:///mlruns.db")
         print("Connected to local sqlite server")
     
-    # Define experiment name
-    experiment_name = "serenair_flight_trajectory_detection"
-    mlflow.set_experiment(experiment_name)
+    if task=='next_instance':
+        # Define experiment name
+        experiment_name = "next instance trajectory prediction"
+        mlflow.set_experiment(experiment_name)
+    elif task == 'next_ten_mins':
+        experiment_name = "next ten minutes trajectory prediction"
+        mlflow.set_experiment(experiment_name)
 
 if __name__ == "__main__":
     setup_mlflow()

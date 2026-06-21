@@ -14,8 +14,10 @@ import copy
 import argparse 
 
 def evaluate(model, val_loader, eval_criterion,
-             target_mean, target_scale, device):
-    
+             target_mean, target_scale, device,
+             task='next_instance'):
+    """Evaluation module of the engine function.
+    """
     criterion = eval_criterion()
 
     target_mean = target_mean.to(device)
@@ -24,8 +26,61 @@ def evaluate(model, val_loader, eval_criterion,
     model.eval()
     val_meters_loss = 0.0
     
-    with torch.inference_mode():
-        for batch_X, batch_y, batch_anchor in val_loader:
+    if task == 'next_instance':
+        with torch.inference_mode():
+            for batch_X, batch_y, batch_anchor in val_loader:
+                batch_X = batch_X.to(device)
+                batch_y = batch_y.to(device)
+                batch_anchor = batch_anchor.to(device)
+                
+                output = model(batch_X)
+                pred = output[0] if isinstance(output, tuple) else output
+                
+                unscaled_pred = (pred * target_scale) + target_mean
+                unscaled_y = (batch_y * target_scale) + target_mean
+                
+                abs_pred = unscaled_pred + batch_anchor
+                abs_y = unscaled_y + batch_anchor
+                
+                val_error = criterion(abs_pred, abs_y)
+                val_meters_loss += val_error.item()
+                
+        return val_meters_loss / len(val_loader)
+    
+    elif task == 'next_ten_mins':
+        with torch.inference_mode():
+            for batch_X, batch_y, batch_anchor in val_loader:
+                batch_X = batch_X.to(device)
+                batch_y = batch_y.to(device)
+                batch_anchor = batch_anchor.to(device)
+                
+                output = model(batch_X)
+                pred = output[0] if isinstance(output, tuple) else output
+                
+                pred = pred.view(-1, 10, 2)
+                
+                unscaled_pred = (pred * target_scale) + target_mean
+                unscaled_y = (batch_y * target_scale) + target_mean
+                
+                abs_pred = unscaled_pred + batch_anchor.unsqueeze(1)
+                abs_y = unscaled_y + batch_anchor.unsqueeze(1)
+                
+                val_error = criterion(abs_pred.view(-1, 2), abs_y.view(-1, 2))
+                val_meters_loss += val_error.item()
+                
+        return val_meters_loss / len(val_loader)
+
+
+def train(model, train_loader, train_criterion, eval_criterion,
+          device, target_mean, target_scale, optimizer,
+          task='next_instance'):
+    """ Training module for the engine function.
+    """
+    model.train()
+    train_loss_meters = 0.0
+    
+    if task == 'next_instance':
+        for batch_X, batch_y, batch_anchor in train_loader:
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
             batch_anchor = batch_anchor.to(device)
@@ -33,66 +88,84 @@ def evaluate(model, val_loader, eval_criterion,
             output = model(batch_X)
             pred = output[0] if isinstance(output, tuple) else output
             
-            unscaled_pred = (pred * target_scale) + target_mean
-            unscaled_y = (batch_y * target_scale) + target_mean
+            loss = train_criterion(pred, batch_y)
             
-            abs_pred = unscaled_pred + batch_anchor
-            abs_y = unscaled_y + batch_anchor
+            optimizer.zero_grad()
+            loss.backward()
             
-            val_error = criterion(abs_pred, abs_y)
-            val_meters_loss += val_error.item()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
             
-    return val_meters_loss / len(val_loader)
-
-
-def train(model, train_loader, train_criterion, eval_criterion,
-          device, target_mean, target_scale, optimizer):
-    """"""
-    model.train()
-    train_loss_meters = 0.0
+            with torch.no_grad(): # display haversine loss to understand how off is our model predictions
+                unscaled_pred = (pred * target_scale) + target_mean
+                unscaled_y = (batch_y * target_scale) + target_mean
+                
+                abs_pred = unscaled_pred + batch_anchor
+                abs_y = unscaled_y + batch_anchor
+                
+                batch_error = eval_criterion(abs_pred, abs_y)
+                train_loss_meters += batch_error.item()
+            
+        return train_loss_meters/ len(train_loader)
     
-    for batch_X, batch_y, batch_anchor in train_loader:
-        batch_X = batch_X.to(device)
-        batch_y = batch_y.to(device)
-        batch_anchor = batch_anchor.to(device)
-        
-        output = model(batch_X)
-        pred = output[0] if isinstance(output, tuple) else output
-        
-        loss = train_criterion(pred, batch_y)
-        
-        optimizer.zero_grad()
-        loss.backward()
-        
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        optimizer.step()
-        
-        with torch.no_grad():
-            unscaled_pred = (pred * target_scale) + target_mean
-            unscaled_y = (batch_y * target_scale) + target_mean
+    elif task == 'next_ten_mins':
+        for batch_X, batch_y, batch_anchor in train_loader:
+            batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
+            batch_anchor = batch_anchor.to(device)
             
-            abs_pred = unscaled_pred + batch_anchor
-            abs_y = unscaled_y + batch_anchor
+            output = model(batch_X)
+            pred = output[0] if isinstance(output, tuple) else output
+            pred = pred.view(-1, 10, 2)
             
-            batch_error = eval_criterion(abs_pred, abs_y)
-            train_loss_meters += batch_error.item()
-        
-    return train_loss_meters/ len(train_loader)
-
+            loss = train_criterion(pred, batch_y)
+            
+            optimizer.zero_grad()
+            loss.backward()
+            
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+            
+            with torch.no_grad():   # display haversine loss to understand how off is our model predictions
+                unscaled_pred = (pred * target_scale) + target_mean
+                unscaled_y = (batch_y * target_scale) + target_mean
+                
+                abs_pred = unscaled_pred + batch_anchor.unsqueeze(1)
+                abs_y = unscaled_y + batch_anchor.unsqueeze(1)
+                
+                batch_error = eval_criterion(abs_pred.view(-1, 2), abs_y.view(-1, 2))
+                train_loss_meters += batch_error.item()
+                
+        return train_loss_meters / len(train_loader)
+    
     
 def training_loop(model_class, num_epochs=10,
                   train_loss_fn=nn.HuberLoss, eval_loss_fn=HaversineLoss,
                   optimize=torch.optim.Adam, learning_rate=0.001, wd=0.0, 
-                  num_layers=2, batch_size=64, hidden_size=64):
-    setup_mlflow()
-    _, _, train_loader, val_loader = dataloader(batch_size=batch_size)
+                  num_layers=2, batch_size=64, hidden_size=64,
+                  task='next_instance'):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
-    target_mean, target_scale = get_unscaled()
-    target_mean = target_mean.to(device)
-    target_scale = target_scale.to(device)
+    if task == 'next_instance':
+        setup_mlflow(task=task)
+        _, _, train_loader, val_loader = dataloader(batch_size=batch_size,
+                                                    task=task)
+        target_mean, target_scale = get_unscaled(task=task)
+        target_mean = target_mean.to(device)
+        target_scale = target_scale.to(device)
+        model = run_experiment(model_name=model_class, num_layers=num_layers,
+                               hidden_size=hidden_size, task=task)
+    elif task == 'next_ten_mins':
+        setup_mlflow(task=task)
+        _, _, train_loader, val_loader = dataloader(batch_size=batch_size,
+                                                    task=task)
+        target_mean, target_scale = get_unscaled(task=task)
+        target_mean = target_mean.to(device)
+        target_scale = target_scale.to(device)
+        model = run_experiment(model_name=model_class, num_layers=num_layers, 
+                               hidden_size=hidden_size, task=task)
+        
     
-    model = run_experiment(model_name=model_class, num_layers=num_layers, hidden_size=hidden_size)
     model = model.to(device)
     
     train_criterion = train_loss_fn()
@@ -131,7 +204,8 @@ def training_loop(model_class, num_epochs=10,
                 device=device, 
                 target_mean=target_mean, 
                 target_scale=target_scale, 
-                optimizer=optimizer
+                optimizer=optimizer,
+                task=task
             )
             
             avg_val = evaluate(
@@ -140,7 +214,8 @@ def training_loop(model_class, num_epochs=10,
                 eval_criterion=eval_loss_fn,
                 target_mean=target_mean, 
                 target_scale=target_scale, 
-                device=device
+                device=device,
+                task=task
             )
             
             scheduler.step(avg_val)
@@ -165,11 +240,17 @@ def training_loop(model_class, num_epochs=10,
         
         if best_model_weights is not None:
             model.load_state_dict(best_model_weights)
-            
-        os.makedirs('../models', exist_ok=True)   
-        local_path = f"../models/{model_class}.pth"
-        torch.save(model.state_dict(), local_path)
-        mlflow.log_artifact(local_path, artifact_path='models')
+        
+        if task == 'next_instance':    
+            os.makedirs('../models/next_instance', exist_ok=True)   
+            local_path = f"../models/next_instance/{model_class}.pth"
+            torch.save(model.state_dict(), local_path)
+            mlflow.log_artifact(local_path, artifact_path='models')
+        elif task == 'next_ten_mins':
+            os.makedirs('../models/next_ten_mins', exist_ok=True)   
+            local_path = f"../models/next_ten_mins/{model_class}.pth"
+            torch.save(model.state_dict(), local_path)
+            mlflow.log_artifact(local_path, artifact_path='models')
         
         print(f'Run complete. {model_class} saved securely to MLflow.')
 
@@ -181,10 +262,9 @@ if __name__ == '__main__':
     parser.add_argument('--wd', type=float, default=0.0, help='Weight decay (L2)')
     parser.add_argument('--lr', type=float, default=0.0004, help='learning rate')
     parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
-    parser.add_argument('--batch_size', type=int, default=64, help='batch size for training and testing set'),
-    parser.add_argument('--optimize', type=str, default=torch.optim.Adam, help='optimizer to use')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size for training and testing set')
     parser.add_argument('--hidden_size', type=int, default=64, help='number of hidden neurons')
-
+    parser.add_argument('--task', type=str, default='next_instance', help='which task? (next instance pred / next ten mins pred)')
     
     args = parser.parse_args()
     
@@ -195,6 +275,6 @@ if __name__ == '__main__':
         wd=args.wd,
         num_layers=args.num_layers,
         batch_size=args.batch_size,
-        optimize=args.optimize,
-        hidden_size=args.hidden_size
+        hidden_size=args.hidden_size,
+        task=args.task
     )
