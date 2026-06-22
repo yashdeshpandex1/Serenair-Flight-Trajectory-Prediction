@@ -120,7 +120,7 @@ def save_sequences(train_df, test_df, features, target, window_size=10,
     
     data_dir = Path(f'../data/rnn_data_{task}/')
     data_dir.mkdir(parents=True, exist_ok=True)
-    save_path = data_dir / 'flight_data_for_rnn_{task}.npz'
+    save_path = data_dir / f'flight_data_for_rnn_{task}.npz'
     
     np.savez_compressed(save_path,
                         X_train = X_train_seq,
