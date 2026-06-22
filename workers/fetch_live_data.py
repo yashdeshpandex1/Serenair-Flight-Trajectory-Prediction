@@ -5,9 +5,6 @@ from dotenv import load_dotenv
 import os, time, sys
 from datetime import datetime, timedelta
 
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(parent_dir)
-
 # from opensky api itself, refreshes the token if it expires
 class TokenManager:
     def __init__(self):
@@ -21,8 +18,7 @@ class TokenManager:
         return self._refresh()
     
     def _refresh(self):
-        env_path = os.path.join(parent_dir, '.env')
-        load_dotenv(dotenv_path=env_path)
+        load_dotenv('../.env')
         client_id = os.getenv('clientId')
         client_secret = os.getenv('clientSecret')
         

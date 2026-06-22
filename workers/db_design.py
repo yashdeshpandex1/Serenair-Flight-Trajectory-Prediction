@@ -7,7 +7,8 @@ def create_tables():
     create_aircraft_table = """
     CREATE TABLE IF NOT EXISTS aircraft (
         icao24 CHAR(6) PRIMARY KEY,
-        origin_country VARCHAR(100)
+        origin_country VARCHAR(100),
+        category SMALLINT
     );
     """
     
@@ -27,12 +28,18 @@ def create_tables():
         vertical_rate DOUBLE PRECISION,
         true_track DOUBLE PRECISION,
         geo_altitude DOUBLE PRECISION,
-        on_ground BOOLEAN
+        on_ground BOOLEAN,
         
+        squawk VARCHAR(10)    
     );
     """
     
-    queries = [create_aircraft_table, create_aircraft_states]
+    create_indexes = """
+    CREATE INDEX IF NOT EXISTS idx_aircraft_states_timestamp ON aircraft_states(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_aircraft_states_location ON aircraft_states(latitude, longitude);
+    """
+    
+    queries = [create_aircraft_table, create_aircraft_states, create_indexes]
     
     try:
         with psycopg.connect(conn_string) as conn:
@@ -42,6 +49,8 @@ def create_tables():
                 for i, query in enumerate(queries, 1):
                     cur.execute(query)
                     print(f"Table {i} created succesfully.")
+                    
+                conn.commit()
     except Exception as e:
         print(f"Failed to execute: {e}")
         
