@@ -25,7 +25,7 @@ MODEL_REGISTRY = {
     'AttentionModel': AttentionModel,
     'HybridConvAttentionGRUModel': HybridConvAttentionGRUModel,
     'Seq2SeqLSTMV1': Seq2SeqTrajectoryLSTMV1,
-    'Seq2SeqLSTMV2': Seq2SeqTrajectoryLSTMV2
+    'Seq2SeqLSTMV1': Seq2SeqTrajectoryLSTMV2
 }
 
 def run_experiment(model_name, hidden_size=64, num_layers=2,

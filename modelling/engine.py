@@ -243,12 +243,12 @@ def training_loop(model_class, num_epochs=10,
         
         if task == 'next_instance':    
             os.makedirs('../models/next_instance', exist_ok=True)   
-            local_path = f"../models/next_instance/{model_class}_{task}.pth"
+            local_path = f"../models/next_instance/{model_class}.pth"
             torch.save(model.state_dict(), local_path)
             mlflow.log_artifact(local_path, artifact_path='models')
         elif task == 'next_ten_mins':
             os.makedirs('../models/next_ten_mins', exist_ok=True)   
-            local_path = f"../models/next_ten_mins/{model_class}_{task}.pth"
+            local_path = f"../models/next_ten_mins/{model_class}.pth"
             torch.save(model.state_dict(), local_path)
             mlflow.log_artifact(local_path, artifact_path='models')
         
