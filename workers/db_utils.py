@@ -2,9 +2,9 @@ import numpy as np
 import psycopg
 from datetime import datetime
 import time
-from database_conn import get_connection_uri
+from .database_conn import get_connection_uri
 import pandas as pd
-from fetch_live_data import fetch_current_weather
+from .fetch_live_data import fetch_current_weather
 
 
 def prod_database_ingestion(df, conn_string):

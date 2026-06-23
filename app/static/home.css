@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+
+* {
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #0D0D0D;
+}
+
+/* ── NAV / HEADER ── */
+.container {
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+}
+
+.heading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 50px;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    font-weight: 300;
+    font-size: 37px;
+}
+
+#air {
+    font-weight: 400;
+}
+
+#flight {
+    width: 40px;
+    height: auto;
+    margin-bottom: 5px;
+    transition: transform 0.3s ease;
+}
+
+/* ── LAYOUT ── */
+.layout-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    max-width: 92%;
+    margin: 32px auto 60px auto;
+}
+
+.middle-row {
+    display: flex;
+    gap: 20px;
+}
+
+.box {
+    background-color: #000;
+    color: white;
+    padding: 20px;
+    min-height: 200px;
+    height: 400px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Inter', sans-serif;
+}
+
+.half-width {
+    flex: 1;
+}
+
+/* ── CONTAINER 1: IMAGE LEFT, TEXT RIGHT ── */
+.banner-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2rem;
+    height: auto;
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.banner-left {
+    flex: 0 0 50%;
+}
+
+.banner-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+/* ── RIGHT COLUMN AS LINK ── */
+.banner-right-link {
+    flex: 0 0 45%;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    padding: 1.5rem;
+}
+
+.banner-right-link:hover {
+    background-color: #111;
+}
+
+.banner-right-link:hover .banner-title {
+    color: #60a5fa;
+}
+
+.banner-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.banner-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    transition: color 0.2s ease;
+}
+
+.banner-desc {
+    font-size: 1rem;
+    color: #aaa;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ── CONTAINER 4: THREE-COLUMN BANNER ── */
+.banner-container-4 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    height: auto;
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.banner-center {
+    flex: 0 0 40%;
+}
+
+.banner-center .banner-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+
+.banner-side-link {
+    flex: 0 0 27%;
+    text-decoration: none;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.banner-side-link:hover {
+    background-color: #111;
+}
+
+.banner-side-link:hover .banner-title {
+    color: #60a5fa;
+}
+
+.banner-side-link.left .banner-side {
+    text-align: right;
+}
+
+.banner-side-link.right .banner-side {
+    text-align: left;
+}
+
+.banner-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ── CARD LINK (Container 2) ── */
+.card-link {
+    text-decoration: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.card-link:hover {
+    background-color: #111;
+}
+
+.card-link:hover .card-title {
+    color: #60a5fa;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.card-image {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+    transition: color 0.2s ease;
+}
+
+/* ── ABOUT CARD (Container 3) ── */
+.about-link {
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 2.5rem;
+}
+
+.about-link:hover .about-credits {
+    color: #aaa;
+}
+
+.about-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.about-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.about-desc {
+    font-size: 0.95rem;
+    color: #aaa;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.about-credits {
+    font-size: 0.85rem;
+    color: white;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+/* ── FOOTER BANNER ── */
+.full-width-banner {
+    background-color: #000;
+    color: white;
+    width: 100%;
+    min-height: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 0;
+}

@@ -11,7 +11,11 @@ import mlflow
 from setup_mlflow import setup_mlflow
 from scaler_utilities import get_unscaled
 import copy
-import argparse 
+import argparse
+import tempfile
+import mlflow.pytorch
+import shutil
+
 
 def evaluate(model, val_loader, eval_criterion,
              target_mean, target_scale, device,
@@ -146,24 +150,14 @@ def training_loop(model_class, num_epochs=10,
                   task='next_instance'):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
-    if task == 'next_instance':
-        setup_mlflow(task=task)
-        _, _, train_loader, val_loader = dataloader(batch_size=batch_size,
-                                                    task=task)
-        target_mean, target_scale = get_unscaled(task=task)
-        target_mean = target_mean.to(device)
-        target_scale = target_scale.to(device)
-        model = run_experiment(model_name=model_class, num_layers=num_layers,
-                               hidden_size=hidden_size, task=task)
-    elif task == 'next_ten_mins':
-        setup_mlflow(task=task)
-        _, _, train_loader, val_loader = dataloader(batch_size=batch_size,
-                                                    task=task)
-        target_mean, target_scale = get_unscaled(task=task)
-        target_mean = target_mean.to(device)
-        target_scale = target_scale.to(device)
-        model = run_experiment(model_name=model_class, num_layers=num_layers, 
-                               hidden_size=hidden_size, task=task)
+    setup_mlflow(task=task)
+    _, _, train_loader, val_loader = dataloader(batch_size=batch_size,
+                                                task=task)
+    target_mean, target_scale = get_unscaled(task=task)
+    target_mean = target_mean.to(device)
+    target_scale = target_scale.to(device)
+    model = run_experiment(model_name=model_class, num_layers=num_layers,
+                            hidden_size=hidden_size, task=task)
         
     
     model = model.to(device)
@@ -185,12 +179,15 @@ def training_loop(model_class, num_epochs=10,
             'learning_rate': learning_rate,
             'weight_decay': wd,
             'optimizer': optimize.__name__,
-            'train_loss_function': train_loss_fn.__name__
+            'train_loss_function': train_loss_fn.__name__,
+            'hidden_size': hidden_size,
+            'batch_size': batch_size
         })
         print(f"Mlflow started tracking {model_class}")
         
         best_val_loss = float('inf')
         best_model_weights = None
+        best_epoch = 0
         
         epoch_iterator = tqdm(range(num_epochs), desc='Training Progress')
         
@@ -223,7 +220,7 @@ def training_loop(model_class, num_epochs=10,
             mlflow.log_metrics({
                 'train_meters': avg_train,
                 'val_haversine_meters': avg_val,
-                'learning_rate': optimizer.param_groups[0]['lr']   
+                'learning_rate': optimizer.param_groups[0]['lr']
             }, step=epoch)
             
             epoch_iterator.set_postfix({
@@ -234,23 +231,36 @@ def training_loop(model_class, num_epochs=10,
             
             if avg_val < best_val_loss:
                 best_val_loss = avg_val
+                best_epoch = epoch
                 best_model_weights = copy.deepcopy(model.state_dict())
 
                 tqdm.write(f"Epoch {epoch} | New Best Val Loss: {best_val_loss:.2f} meters")
         
         if best_model_weights is not None:
             model.load_state_dict(best_model_weights)
+            
+        mlflow.log_metrics({
+            'best_val_haversine_meters': best_val_loss,
+            'best_epoch': best_epoch
+        })
         
-        if task == 'next_instance':    
-            os.makedirs('../models/next_instance', exist_ok=True)   
-            local_path = f"../models/next_instance/{model_class}.pth"
-            torch.save(model.state_dict(), local_path)
-            mlflow.log_artifact(local_path, artifact_path='models')
-        elif task == 'next_ten_mins':
-            os.makedirs('../models/next_ten_mins', exist_ok=True)   
-            local_path = f"../models/next_ten_mins/{model_class}.pth"
-            torch.save(model.state_dict(), local_path)
-            mlflow.log_artifact(local_path, artifact_path='models')
+        folder = 'next_instance' if task == 'next_instance' else 'next_ten_mins'
+        os.makedirs(f'../models/{folder}', exist_ok=True)
+        local_path = f"../models/{folder}/{model_class}.pth"
+        
+        torch.save(model.state_dict(), local_path)
+        
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            mlflow.pytorch.save_model(
+                pytorch_model=model,
+                path=os.path.join(tmp_dir, 'models')
+            )
+            shutil.copy(f'../data/rnn_data_{task}/feature_scaler_{task}.joblib',
+                        os.path.join(tmp_dir, f'feature_scaler.joblib'))
+            shutil.copy(f'../data/rnn_data_{task}/target_scaler_{task}.joblib',
+                        os.path.join(tmp_dir, f'target_scaler.joblib'))
+            mlflow.log_artifacts(tmp_dir, artifact_path='models')
+
         
         print(f'Run complete. {model_class} saved securely to MLflow.')
 

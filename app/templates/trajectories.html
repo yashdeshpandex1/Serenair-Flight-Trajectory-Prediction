@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %} Serenair Flight Trajectory Prediction {% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='trajectories.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="maps-wrapper">
+    {{ div | safe}}
+</div>
+<script>const basePath = '/trajectories';</script>
+{% include 'continent_selector.html' %}
+{{ script | safe }}
+{% endblock %}

@@ -1,0 +1,77 @@
+.toggle-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0px;
+    padding: 30px 0 25px 0; 
+    background-color: #0D0D0D;
+}
+
+.toggle-btn {
+    color: white;
+    text-decoration: none;
+    padding: 12px 45px;
+    font-family: 'Source Serif 4', serif;
+    font-weight: 455;
+    font-size: 18px;
+    border: 1px solid #333;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.toggle-btn:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.toggle-btn:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.toggle-btn.active {
+    background-color: #000000;
+    color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.toggle-btn:hover:not(.active) {
+    background-color: #1a1a1a;
+}
+
+.maps-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.continent-selector {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 40px;
+    background-color: #0D0D0D;
+}
+
+.continent-dropdown {
+    background-color: #0D0D0D;
+    color: white;
+    border: 1px solid #333;
+    padding: 8px 20px;
+    font-family: 'Source Serif 4', serif;
+    font-size: 16px;
+    font-weight: 455;
+    border-radius: 4px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 35px;
+}
+
+.continent-dropdown:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.5);
+}
+
+.continent-dropdown option {
+    background-color: #0D0D0D;
+}

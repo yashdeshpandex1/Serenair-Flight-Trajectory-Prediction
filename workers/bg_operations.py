@@ -1,9 +1,10 @@
 import threading
-from database_conn import get_connection_uri
+from workers.database_conn import get_connection_uri
 import time
 from datetime import datetime
-from fetch_live_data import fetch_live_flights
-from db_utils import prod_database_ingestion, prune_old_data
+from workers.database_conn import get_connection_uri
+from workers.fetch_live_data import fetch_live_flights_data
+from workers.db_utils import prod_database_ingestion, prune_old_data
 
 WAKE_UP = 0
 SCRIPT_RUNNING = False
@@ -25,7 +26,7 @@ def start_background_data_collection():
                 break
             
             now = datetime.now()
-            df_flights = fetch_live_flights()
+            df_flights = fetch_live_flights_data()
             
             if not df_flights.empty:
                 prod_database_ingestion(df_flights, conn_string)

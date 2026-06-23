@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os, time, sys
 from datetime import datetime, timedelta
 
+
 # from opensky api itself, refreshes the token if it expires
 class TokenManager:
     def __init__(self):
