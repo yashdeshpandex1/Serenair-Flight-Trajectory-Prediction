@@ -1,4 +1,5 @@
-from setup_mlflow import setup_mlflow
+import os,  sys
+from modelling.setup_mlflow import setup_mlflow
 from mlflow.tracking import MlflowClient
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import Model
@@ -7,10 +8,12 @@ from azure.ai.ml.constants import AssetTypes
 import argparse
 import json
 
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+config_path = os.path.join(_ROOT, 'config.json') 
 
 def get_ml_client():
     try:
-        with open('config.json') as f:
+        with open(config_path) as f:
             config = json.load(f)
 
         return MLClient(DefaultAzureCredential(),

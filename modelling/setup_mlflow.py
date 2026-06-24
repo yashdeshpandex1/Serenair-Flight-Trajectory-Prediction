@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 import os
 from azure.ai.ml import MLClient
 from azure.identity import DefaultAzureCredential
+import os, sys
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
 
 
 def setup_mlflow(task='next_instance'):

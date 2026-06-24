@@ -4,6 +4,7 @@ from flask import render_template
 from bokeh_utils import next_instance_trajectory_map, \
     next_ten_mins_trajectory_map
 from dashboard import build_dashboard_figures
+from inference_utils import initialize_inference_engine
 
 import os,  sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -11,9 +12,19 @@ sys.path.append(parent_dir)
 from workers.bg_operations import trigger_background_worker
 from workers.db_utils import fetch_and_integrate_data
 from preprocessing.data_prep import prep_live_inference_data
+from predict import predict_for_next_ten_mins, predict_for_next_instance
 
 app = Flask(__name__)
 CORS(app)
+
+# INITIALISE MODELS AND SCALERS
+MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE = initialize_inference_engine(
+    task='next_instance'
+)
+MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS = initialize_inference_engine(
+    task='next_ten_mins'
+)
+
 
 # HOME PAGE
 @app.route('/')
@@ -58,7 +69,9 @@ def get_trajectories():
         live_planes = [{'icao24': row['icao24'], 'lat': row['latitude'], 'lon': row['longitude']} for _, row in latest_positions.iterrows()]
         return jsonify({'status': 'calibrating', 'message': 'collecting 10 timestamps..', 'live_planes': live_planes, 'trajectories': []}), 206
     
-    trajectories = predict(X_tensor, plane_metadata)
+    trajectories = predict_for_next_instance(X_tensor, plane_metadata,
+                                             model=MODEL_NEXT_INSTANCE,
+                                             scaler=SCALER_NEXT_INSTANCE)
     return jsonify({'status': 'success!', 'message': 'collecting 10 timestamps..', 
                     'live_planes': [], 'trajectories': trajectories})
 
@@ -73,7 +86,7 @@ def dashboard_page():
 def dashboard_data():
     trigger_background_worker()
     df = fetch_and_integrate_data('global')
-    return jsonify(build_dashboard_figures[df if not df.empty else None])
+    return jsonify(build_dashboard_figures(df if not df.empty else None))
 
 
 # TEN MINUTES TRAJECTORY PREDICTION
@@ -93,7 +106,7 @@ def get_ten_min_trajectories():
     continent = request.args.get('region', 'europe')
     
     df_live = fetch_and_integrate_data(continent)
-    if df_live.empty():
+    if df_live.empty:
         return jsonify({'status': 'Waking up', 
                         'message': 'Waking up the script. Please wait..', 
                         'live_planes': [], 'trajectories': []}), 202
@@ -110,7 +123,9 @@ def get_ten_min_trajectories():
                         'message': 'collecting 10 timestamps..', 
                         'live_planes': live_planes, 'trajectories': []}), 206
     
-    trajectories = predict(X_tensor, plane_metadata)
+    trajectories = predict_for_next_ten_mins(X_tensor, plane_metadata,
+                                             model=MODEL_NEXT_TEN_MINS,
+                                             scaler=SCALER_NEXT_TEN_MINS)
     return jsonify({'status': 'success!', 
                     'message': '10-Minute Trajectory Prediction active', 
                     'live_planes': [], 'trajectories': trajectories}), 200
