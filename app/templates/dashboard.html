@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  main { padding: 0 40px; margin-top: 40px; margin-bottom: 60px; }
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 20px;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 40px;
+    background: #000000;
+    border: 1px solid #222222;
+    box-sizing: border-box;
+  }
+  .dash-card {
+    background: #0D0D0D;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  .dash-card h3 {
+    color: #888888;
+    font-size: 14px;
+    font-family: Inter, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 10px 0;
+    flex-shrink: 0;
+  }
+  .dash-card p {
+    color: #555555;
+    font-size: 12px;
+    font-family: Inter, sans-serif;
+    margin: 10px 0 0 0;
+    flex-shrink: 0;
+  }
+  .chart { flex-grow: 1; }
+  #card-kpi       { grid-area: 1 / 1 / 2 / 2; }
+  #card-region    { grid-area: 2 / 1 / 3 / 2; }
+  #card-bar       { grid-area: 3 / 1 / 4 / 2; }
+  #card-phase     { grid-area: 1 / 2 / 2 / 3; }
+  #card-countries { grid-area: 1 / 3 / 2 / 4; }
+  #card-scatter   { grid-area: 2 / 2 / 4 / 4; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-grid">
+  <div class="dash-card" id="card-kpi">
+    <h3>Airborne Aircraft</h3>
+    <div id="plot-kpi" class="chart" style="height:200px;"></div>
+    <p>Time</p>
+  </div>
+  <div class="dash-card" id="card-region">
+    <h3>Regional Distribution</h3>
+    <div id="plot-region" class="chart" style="height:220px;"></div>
+    <p>Region vs. Aircraft count</p>
+  </div>
+  <div class="dash-card" id="card-bar">
+    <h3>Active Categories</h3>
+    <div id="plot-bar" class="chart" style="height:220px;"></div>
+    <p>Velocity vs. Aircraft count</p>
+  </div>
+  <div class="dash-card" id="card-phase">
+    <h3>Aircraft Count Over Time.</h3>
+    <div id="plot-phase" class="chart" style="height:200px;"></div>
+    <p>Aircraft count is sampled every 10secs.</p>
+  </div>
+  <div class="dash-card" id="card-countries">
+    <h3>Top 5 Origin Countries</h3>
+    <div id="plot-countries" class="chart" style="height:200px;"></div>
+    <p>Aircraft count</p>
+  </div>
+  <div class="dash-card" id="card-scatter">
+    <h3>Velocity vs. Altitude</h3>
+    <div id="plot-scatter" class="chart" style="height:550px;"></div>
+    <p>Velocity (m/s) vs. Altitude (m)</p>
+  </div>
+</div>
+<script>
+  const CFG = { displayModeBar: false, responsive: true };
+  const LAYOUT_BASE = {
+    paper_bgcolor: '#0D0D0D',
+    plot_bgcolor:  '#0D0D0D',
+    margin: { l: 50, r: 20, t: 10, b: 30 },
+    font:   { color: '#888888', family: 'Inter, sans-serif' },
+    showlegend: false,
+  };
+  const AXIS      = { showgrid: true,  gridcolor: '#333333', color: '#888888', zeroline: false };
+  const AXIS_FLAT = { showgrid: false,                       color: '#888888', zeroline: false };
+  function draw(f) {
+    Plotly.react('plot-kpi', f.kpi.data,
+      { ...LAYOUT_BASE, margin: {l:0,r:0,t:10,b:10} }, CFG);
+    Plotly.react('plot-region', f.region.data,
+      { ...LAYOUT_BASE, margin: {l:0,r:0,t:10,b:10}, showlegend: false }, CFG);
+    Plotly.react('plot-bar', f.bar.data,
+      { ...LAYOUT_BASE,
+        margin: {l:55, r:20, t:10, b:30},
+        xaxis: AXIS_FLAT, yaxis: AXIS }, CFG);
+    Plotly.react('plot-phase', f.phase.data,
+      { ...LAYOUT_BASE,
+        margin: {l:45, r:20, t:10, b:30},
+        xaxis: { ...AXIS_FLAT, showticklabels: false },
+        yaxis: { ...AXIS } }, CFG);
+    Plotly.react('plot-countries', f.countries.data,
+      { ...LAYOUT_BASE,
+        margin: {l:110, r:20, t:10, b:30},
+        xaxis: { ...AXIS },
+        yaxis: { ...AXIS_FLAT, autorange: 'reversed' } }, CFG);
+    Plotly.react('plot-scatter', f.scatter.data,
+      { ...LAYOUT_BASE,
+        margin: {l:55, r:20, t:10, b:30},
+        xaxis: { ...AXIS },
+        yaxis: { ...AXIS } }, CFG);
+  }
+  // Initial render from server-side data injected by Flask
+  draw({{ figures | tojson }});
+  // Live poll every 10 seconds
+  setInterval(() => {
+    fetch('/api/dashboard-data')
+      .then(r => r.json())
+      .then(draw)
+      .catch(console.error);
+  }, 10000);
+</script>
+{% endblock %}

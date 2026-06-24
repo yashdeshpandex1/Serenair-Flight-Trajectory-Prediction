@@ -1,0 +1,11 @@
+<div class="continent-selector">
+    <select class="continent-dropdown" onchange="window.location.href=basePath+'?continent='+this.value">
+        <option value="europe"        {% if continent == 'europe' %}selected{% endif %}>Europe</option>
+        <option value="north_america" {% if continent == 'north_america' %}selected{% endif %}>North America</option>
+        <option value="south_america" {% if continent == 'south_america' %}selected{% endif %}>South America</option>
+        <option value="asia"          {% if continent == 'asia' %}selected{% endif %}>Asia</option>
+        <option value="africa"        {% if continent == 'africa' %}selected{% endif %}>Africa</option>
+        <option value="australia"     {% if continent == 'australia' %}selected{% endif %}>Oceania</option>
+        <option value="global"        {% if continent == 'global' %}selected{% endif %}>Global</option>
+    </select>
+</div>

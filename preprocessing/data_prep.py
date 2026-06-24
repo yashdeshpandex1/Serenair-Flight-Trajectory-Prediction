@@ -1,17 +1,20 @@
 # Imports
 import joblib
+import torch
 from pathlib import Path
+import numpy as np
+import argparse
+import pandas as pd
 
 # get working scripts from preprocessing/
 from data_cleaning import clean_df
 from feature_engineering import feature_engineering
 from sklearn_utilities import group_shuffle_split, scale_dataset 
-from utilities import sort_values, num_aircrafts, \
-    initialise_features_and_target, initialise_df, integrate_weather_data
+from utilities import sort_values, initialise_features_and_target, \
+    initialise_df, integrate_weather_data
 from rnn_sequences import save_sequences
 from fetch_weather_data import get_weather_data
-import argparse
-import pandas as pd
+
 
 def prep_train_data(path='../data/opensky_raw.csv', task='next_instance'):
     """Complete data pipeline to from feature engineering to creating sequences,
@@ -52,7 +55,52 @@ def prep_train_data(path='../data/opensky_raw.csv', task='next_instance'):
     joblib.dump(feature_scaler, scaler_path)
     joblib.dump(target_scaler, target_path)
     
+
+def prep_live_inference_data(df, window_size=10, 
+                             task='next_instance'):
+    if df.empty:
+        return torch.empty(0), []
     
+    df = sort_values(df)
+    df = clean_df(df)
+    df = feature_engineering(df)
+    
+    features, _ = initialise_features_and_target()
+    df['raw_latitude'] = df['latitude']
+    df['raw_longitude'] = df['longitude']
+    
+    scaler_path = Path(f'../data/rnn_data_{task}/feature_scaler_{task}.joblib')
+    feature_scaler = joblib.load(scaler_path)
+    
+    df = df.dropna(subset=features)
+    df[features] = feature_scaler.transform(df[features])
+    
+    sequences = []
+    plane_metadata = []
+    
+    for icao24, group in df.groupby('icao24'):
+        if len(group) < window_size:
+            continue
+        
+        group = group.tail(window_size)
+        seq_matrix = group[features].values
+        sequences.append(seq_matrix)
+        
+        latest_state = group.iloc[-1]
+        plane_metadata.append({
+            'icao24': icao24,
+            'current_lat': latest_state['raw_latitude'],
+            'current_lon': latest_state['raw_longitude']
+        })
+        
+    if not sequences:
+        return torch.empty(0), []
+    
+    X_tensor = torch.tensor(np.array(sequences), dtype=torch.float32)
+    
+    return X_tensor, plane_metadata
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run data pipelines')
     parser.add_argument('--task', type=str, required=True, choices=['next_instance', 'next_ten_mins'],
