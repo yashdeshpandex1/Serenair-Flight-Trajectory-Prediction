@@ -87,6 +87,35 @@ def ten_min_trajectories_page():
     return render_template('ten_min_trajectories.html', script=script,
                            div=map_div, continent=continent)
 
+@app.route('/api/10-min-trajectories', methods=['GET'])
+def get_ten_min_trajectories():
+    trigger_background_worker()
+    continent = request.args.get('region', 'europe')
+    
+    df_live = fetch_and_integrate_data(continent)
+    if df_live.empty():
+        return jsonify({'status': 'Waking up', 
+                        'message': 'Waking up the script. Please wait..', 
+                        'live_planes': [], 'trajectories': []}), 202
+        
+    X_tensor, plane_metadata = prep_live_inference_data(df_live, 
+                                                        window_size=10,
+                                                        task='next_ten_mins')
 
+    if X_tensor.nelement() == 0:
+        latest_positions = df_live.sort_values('timestamp').groupby('icao24').tail(1)
+        live_planes = [{'icao24': row['icao24'], 'lat': row['latitude'], 
+                        'lon': row['longitude']} for _, row in latest_positions.iterrows()]
+        return jsonify({'status': 'calibrating', 
+                        'message': 'collecting 10 timestamps..', 
+                        'live_planes': live_planes, 'trajectories': []}), 206
+    
+    trajectories = predict(X_tensor, plane_metadata)
+    return jsonify({'status': 'success!', 
+                    'message': '10-Minute Trajectory Prediction active', 
+                    'live_planes': [], 'trajectories': trajectories}), 200
+
+    
+    
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
