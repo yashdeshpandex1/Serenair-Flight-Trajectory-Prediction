@@ -101,7 +101,7 @@ def trajectories_page():
 @app.route('/api/trajectories', methods=['GET'])
 def get_trajectories():
     trigger_background_worker()
-    continent = request.args.get('region', 'europe')
+    continent = request.args.get('continent', 'europe')
     df_live = fetch_and_integrate_data(continent)
     
     if df_live.empty:
@@ -152,10 +152,10 @@ def ten_mins_trajectories_page():
     return render_template('ten_mins_trajectories.html', script=script,
                            div=map_div, continent=continent)
 
-@app.route('/api/10-mins-trajectories', methods=['GET'])
+@app.route('/api/ten-mins-trajectories', methods=['GET'])
 def get_ten_mins_trajectories():
     trigger_background_worker()
-    continent = request.args.get('region', 'europe')
+    continent = request.args.get('continent', 'europe')
     
     df_live = fetch_and_integrate_data(continent)
     if df_live.empty:
