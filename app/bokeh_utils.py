@@ -416,11 +416,11 @@ def build_cluster_data(bokeh_data):
 
         # Tier coloring
         if count >= 13:
-            color = '#CC0033'   # red — high density
+            color = '#8B1A2E'   # red — high density
         elif count >= 7:
-            color = '#FFBF00'   # yellow — moderate
+            color = '#A67C00'   # yellow — moderate
         else:
-            color = '#ad4bb4'   # purple — mild
+            color = '#6B3A7D'  # purple — mild
 
         result['cluster_x'].append(center_x)
         result['cluster_y'].append(center_y)
