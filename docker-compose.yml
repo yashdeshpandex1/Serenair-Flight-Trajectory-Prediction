@@ -1,23 +1,46 @@
+version: "3.9"
 services:
-  jupyter:
-    build:
-      context: .
-      dockerfile: ./preprocessing/Dockerfile
-    ports:
-      - "8080:8080"
+  app:
+    build: .
+    container_name: serenair_app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - app_network
+    mem_limit: 2500m
     volumes:
-      - ./notebooks:/Serenair/notebooks
-      - ./data:/Serenair/data
-
-  database:
-    build:
-      context: .
-      dockerfile: ./database/Dockerfile
-    env_file:
-     - .env
+      - ./models:/repo/models
+      - ./data:/repo/data
+      - ./config.json:/repo/config.json:ro    # ← added
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    restart: unless-stopped
+    command: redis-server --maxmemory 300mb --maxmemory-policy allkeys-lru
     volumes:
-     - ./data:/Serenair/data
-     - ./database:/Serenair/database
-    restart: on-failure
+      - redis_data:/data
+    networks:
+      - app_network
+    mem_limit: 350m
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - app_network
+    mem_limit: 100m
+volumes:
+  redis_data:
+networks:
+  app_network:
+    driver: bridge
