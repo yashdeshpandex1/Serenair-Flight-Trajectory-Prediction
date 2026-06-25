@@ -18,3 +18,4 @@ plotly==6.5.2
 
 redis==8.0.0
 python-dotenv==1.2.2
+psycopg==3.3.3

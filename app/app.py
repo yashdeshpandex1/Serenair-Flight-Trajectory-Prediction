@@ -2,13 +2,14 @@ from flask import Flask, request, jsonify
 import logging
 from flask_cors import CORS
 from flask import render_template
-from bokeh_utils import next_instance_trajectory_map, \
-    next_ten_mins_trajectory_map, bokeh_data_helper, crowd_density_map, \
-        build_cluster_data, build_dashboard_fig
+from bokeh_utils import next_instance_trajectory_map, next_ten_mins_trajectory_map, bokeh_data_helper, crowd_density_map, build_cluster_data, build_dashboard_fig
 from inference_utils import initialize_inference_engine
-import redis, json
+import redis
+import json
 
-import os,  sys
+
+import os
+import sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 from workers.bg_operations import trigger_background_worker
@@ -30,7 +31,7 @@ logging.basicConfig(
 
 # CACHING
 redis_host = os.getenv('REDIS_HOST', 'localhost')
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+redis_client = redis.Redis(host=redis_host, port=6379, db=0)
 CACHE_TTL = 8
 
 def get_cached_map_data(continent, task, model, scaler):
