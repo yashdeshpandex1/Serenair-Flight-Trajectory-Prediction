@@ -15,7 +15,7 @@ services:
     volumes:
       - ./models:/repo/models
       - ./data:/repo/data
-      - ./config.json:/repo/config.json:ro    # ← added
+      - ./config.json:/repo/config.json:ro    
   redis:
     image: redis:7-alpine
     container_name: redis_cache
