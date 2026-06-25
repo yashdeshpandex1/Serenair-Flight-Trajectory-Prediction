@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %} Serenair Crowding Prediction {% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='crowding.css') }}">
+{% endblock %}
+{% block content %}
+<div class="toggle-nav">
+    <a href="/ten-mins-trajectories?continent={{ continent }}" class="toggle-btn">10 Min Future Trajectory</a>
+    <a href="/crowd-density-prediction?continent=global" class="toggle-btn active">Crowding</a>
+</div>
+<div class="maps-wrapper">
+    {{ div | safe }}
+</div>
+<div class="bottom-bar">
+    <div style="display: flex; gap: 12px;">
+        <div class="map-legend">
+            <span class="legend-dot" style="background: rgba(173, 75, 180, 0.3); border-color: #ad4bb4;"></span>
+            4–6 flights converging within 100km
+        </div>
+        <div class="map-legend">
+            <span class="legend-dot" style="background: rgba(255, 191, 0, 0.3); border-color: #FFBF00;"></span>
+            7–12 flights converging within 100km
+        </div>
+        <div class="map-legend">
+            <span class="legend-dot" style="background: rgba(204, 0, 51, 0.3); border-color: #CC0033;"></span>
+            13+ flights converging within 100km
+        </div>
+    </div>
+    <script>const basePath = '/crowd-density-prediction';</script>
+    {% include 'continent_selector.html' %}
+</div>
+{{ script | safe }}
+{% endblock %}

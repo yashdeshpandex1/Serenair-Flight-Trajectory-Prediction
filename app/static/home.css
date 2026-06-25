@@ -288,3 +288,28 @@ h1 {
     align-items: center;
     padding: 2rem 0;
 }
+
+
+/* ── BACK BUTTON ── */
+.back-btn-wrapper {
+    padding: 14px 24px 0 24px;
+}
+
+.back-btn {
+    color: #555;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+}
+
+.back-btn:hover {
+    color: #ffffff;
+}
+
+/* Hide on home page */
+.home-page .back-btn-wrapper {
+    display: none;
+}

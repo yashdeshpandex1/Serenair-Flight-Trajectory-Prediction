@@ -97,29 +97,29 @@
   const AXIS      = { showgrid: true,  gridcolor: '#333333', color: '#888888', zeroline: false };
   const AXIS_FLAT = { showgrid: false,                       color: '#888888', zeroline: false };
   function draw(f) {
-    Plotly.react('plot-kpi', f.kpi.data,
-      { ...LAYOUT_BASE, margin: {l:0,r:0,t:10,b:10} }, CFG);
-    Plotly.react('plot-region', f.region.data,
-      { ...LAYOUT_BASE, margin: {l:0,r:0,t:10,b:10}, showlegend: false }, CFG);
-    Plotly.react('plot-bar', f.bar.data,
-      { ...LAYOUT_BASE,
-        margin: {l:55, r:20, t:10, b:30},
-        xaxis: AXIS_FLAT, yaxis: AXIS }, CFG);
-    Plotly.react('plot-phase', f.phase.data,
-      { ...LAYOUT_BASE,
-        margin: {l:45, r:20, t:10, b:30},
-        xaxis: { ...AXIS_FLAT, showticklabels: false },
-        yaxis: { ...AXIS } }, CFG);
-    Plotly.react('plot-countries', f.countries.data,
-      { ...LAYOUT_BASE,
-        margin: {l:110, r:20, t:10, b:30},
-        xaxis: { ...AXIS },
-        yaxis: { ...AXIS_FLAT, autorange: 'reversed' } }, CFG);
-    Plotly.react('plot-scatter', f.scatter.data,
-      { ...LAYOUT_BASE,
-        margin: {l:55, r:20, t:10, b:30},
-        xaxis: { ...AXIS },
-        yaxis: { ...AXIS } }, CFG);
+      Plotly.react('plot-kpi', f.kpi.data,
+        { ...f.kpi.layout, ...LAYOUT_BASE, margin: {l:0,r:0,t:10,b:10} }, CFG);
+      Plotly.react('plot-region', f.region.data,
+        { ...f.region.layout, ...LAYOUT_BASE, margin: {l:0,r:0,t:10,b:10}, showlegend: false }, CFG);
+      Plotly.react('plot-bar', f.bar.data,
+        { ...f.bar.layout, ...LAYOUT_BASE,
+          margin: {l:55, r:20, t:10, b:30},
+          xaxis: AXIS_FLAT, yaxis: AXIS }, CFG);
+      Plotly.react('plot-phase', f.phase.data,
+        { ...f.phase.layout, ...LAYOUT_BASE,
+          margin: {l:45, r:20, t:10, b:30},
+          xaxis: { ...AXIS_FLAT, showticklabels: false },
+          yaxis: { ...AXIS } }, CFG);
+      Plotly.react('plot-countries', f.countries.data,
+        { ...f.countries.layout, ...LAYOUT_BASE,
+          margin: {l:110, r:20, t:10, b:30},
+          xaxis: { ...AXIS },
+          yaxis: { ...AXIS_FLAT, autorange: 'reversed' } }, CFG);
+      Plotly.react('plot-scatter', f.scatter.data,
+        { ...f.scatter.layout, ...LAYOUT_BASE,
+          margin: {l:55, r:20, t:10, b:30},
+          xaxis: { ...AXIS },
+          yaxis: { ...AXIS } }, CFG);
   }
   // Initial render from server-side data injected by Flask
   draw({{ figures | tojson }});

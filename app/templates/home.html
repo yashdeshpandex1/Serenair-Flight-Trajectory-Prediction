@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 {% block title %} Serenair Home Page {% endblock %}
+{% block body_class %}home-page{% endblock %}
 {% block content %}
 <div class="layout-wrapper">
 
     <div class="box banner-container">
         <div class="banner-left">
-            <img src="{{url_for('static', filename='images/')}}" alt="Serenair banner" class="banner-image">
+            <img src="{{url_for('static', filename='images/next_instance_trajectory.jpeg')}}" alt="Serenair banner" class="banner-image">
         </div>
         <a href= "{{ url_for('trajectories_page') }}" class="banner-right-link">
             <div class="banner-right">
@@ -18,7 +19,7 @@
     <div class="middle-row">
         <a href="{{ url_for('dashboard_page') }}" class="box half-width card-link">
             <div class="card-content">
-                <img src="{{ url_for('static', filename='images/') }}" alt="Dashboard" class="card-image">
+                <img src="{{ url_for('static', filename='images/next_instance_trajectory.jpeg') }}" alt="Dashboard" class="card-image">
                 <h2 class="card-title">Dashboard</h2>
             </div>
         </a>
@@ -37,16 +38,16 @@
     </div>
 
     <div class="box banner-container-4">
-        <a href="{{ url_for('crowding_page') }}" class="banner-side-link left">
+        <a href="{{ url_for('crowd_density_prediction') }}" class="banner-side-link left">
             <div class="banner-side">
                 <h2 class="banner-title">Traffic Density Prediction</h2>
                 <p class="banner-desc">Identify high-density airspace regions and flight convergence zones (~10 minutes before).</p>
             </div>
         </a>
         <div class="banner-center">
-            <img src="{{ url_for('static', filename='images/')}}" alt="center banner" class="banner-image">
+            <img src="{{ url_for('static', filename='images/next_instance_trajectory.jpeg')}}" alt="center banner" class="banner-image">
         </div>
-        <a href="{{ url_for('ten_min_trajectories_page') }}" class="banner-side-link right">
+        <a href="{{ url_for('ten_mins_trajectories_page') }}" class="banner-side-link right">
             <div class="banner-side">
                 <h2 class="banner-title">Trajectory Prediction for next 10 minutes (approximate).</h2>
                 <p class="banner-desc">Forecast aircraft positions up to ~10 minutes ahead with our extended horizon modelling.</p>
@@ -54,6 +55,209 @@
         </a>
     </div>
 
-
 </div>
+<div class="full-width-banner" style="position: relative;">
+    <div id="d3-canvas"></div>
+    <div class="social-corner">
+        <p class="social-label">Get in touch</p>
+        <div class="social-links">
+            <a href="https://github.com/" target="_blank" class="social-icon" aria-label="GitHub">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+                </svg>
+            </a>
+            <a href="https://linkedin.com/" target="_blank" class="social-icon" aria-label="LinkedIn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                    <rect x="2" y="9" width="4" height="12"/>
+                    <circle cx="4" cy="4" r="2"/>
+                </svg>
+            </a>
+            <a href="mailto:you@example.com" class="social-icon" aria-label="Email">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.social-corner {
+    position: absolute;
+    bottom: 2rem;
+    right: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+.social-label {
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 0;
+}
+.social-links {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.social-icon {
+    color: #555;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+.social-icon:hover {
+    color: #ffffff;
+}
+</style>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const width = 1200;
+    const height = 300;
+
+    const svg = d3.select('#d3-canvas')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+    const networkNodes = [
+        {id: 'i1',     x: 150,  y: 60,  label: 'T-9', sub: 'current',        r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
+        {id: 'i2',     x: 150,  y: 150, label: 'T-5', sub: 'midpoint',       r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
+        {id: 'i3',     x: 150,  y: 240, label: 'T-0', sub: 'window start',   r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
+        {id: 'lstm1',  x: 400,  y: 150, label: 'LSTM Layer 1', sub: '(128, 10, 64)', r: 40, color: '#AAAAAA', shape: 'square', layer: 1},
+        {id: 'lstm2',  x: 620,  y: 150, label: 'LSTM Layer 2', sub: '(128, 10, 64)', r: 40, color: '#AAAAAA', shape: 'square', layer: 2},
+        {id: 'fc',     x: 830,  y: 150, label: 'FC Layer',     sub: '(128, 2)',      r: 35, color: '#AAAAAA', shape: 'square', layer: 3},
+        {id: 'output', x: 1020, y: 150, label: 'Output',       sub: '(Δlat, Δlon)', r: 25, color: '#AAAAAA', shape: 'circle', layer: 4},
+    ];
+
+    const networkLinks = [
+        {source: 'i1',    target: 'lstm1',  order: 0, layer: 1},
+        {source: 'i2',    target: 'lstm1',  order: 1, layer: 1},
+        {source: 'i3',    target: 'lstm1',  order: 2, layer: 1},
+        {source: 'lstm1', target: 'lstm2',  order: 3, layer: 2},
+        {source: 'lstm2', target: 'fc',     order: 4, layer: 3},
+        {source: 'fc',    target: 'output', order: 5, layer: 4},
+    ];
+
+    const nodeById = d3.index(networkNodes, d => d.id);
+    const mappedLinks = networkLinks.map(l => ({
+        source: nodeById.get(l.source),
+        target: nodeById.get(l.target),
+        order: l.order,
+        layer: l.layer
+    }));
+
+    const linkGenerator = d3.linkHorizontal()
+        .x(d => d.x)
+        .y(d => d.y);
+
+    svg.selectAll('.link-base')
+        .data(mappedLinks)
+        .enter()
+        .append('path')
+        .attr('fill', 'none')
+        .attr('stroke', '#333333')
+        .attr('stroke-width', 2)
+        .attr('d', linkGenerator);
+
+    const animatedLinks = svg.selectAll('.link-animated')
+        .data(mappedLinks)
+        .enter()
+        .append('path')
+        .attr('fill', 'none')
+        .attr('stroke', '#CC0033')
+        .attr('stroke-width', 2)
+        .attr('pointer-events', 'none')
+        .attr('d', linkGenerator);
+
+    const totalLengths = [];
+    animatedLinks.each(function() {
+        totalLengths.push(this.getTotalLength());
+    });
+
+    animatedLinks.each(function(d, i) {
+        d3.select(this)
+            .attr('stroke-dasharray', totalLengths[i])
+            .attr('stroke-dashoffset', totalLengths[i]);
+    });
+
+    const STEP_DELAY = 400;
+    const STEP_DUR   = 600;
+    const PAUSE      = 800;
+
+    function runCycle() {
+        animatedLinks.each(function(d, i) {
+            d3.select(this)
+                .interrupt()
+                .attr('stroke-dashoffset', totalLengths[i]);
+        });
+
+        animatedLinks.each(function(d, i) {
+            d3.select(this)
+                .transition()
+                .delay(d.order * STEP_DELAY)
+                .duration(STEP_DUR)
+                .ease(d3.easeCubicInOut)
+                .attr('stroke-dashoffset', 0)
+                .on('end', function() {
+                    if (d.order === mappedLinks.length - 1) {
+                        setTimeout(runCycle, PAUSE);
+                    }
+                });
+        });
+    }
+
+    runCycle();
+
+    const nodes = svg.selectAll('.node')
+        .data(networkNodes)
+        .enter()
+        .append('g')
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+
+    nodes.filter(d => d.shape === 'circle')
+        .append('circle')
+        .attr('r', d => d.r)
+        .attr('fill', '#000')
+        .attr('stroke', d => d.color)
+        .attr('stroke-width', 2);
+
+    nodes.filter(d => d.shape === 'square')
+        .append('rect')
+        .attr('x', d => -d.r)
+        .attr('y', d => d.id === 'fc' ? -d.r * 3 : -d.r)
+        .attr('width',  d => d.r * 2)
+        .attr('height', d => d.id === 'fc' ? d.r * 6 : d.r * 2)
+        .attr('rx', 4)
+        .attr('fill', '#000')
+        .attr('stroke', d => d.color)
+        .attr('stroke-width', 2);
+
+    nodes.append('text')
+        .attr('y', d => d.id === 'fc' ? -d.r * 3 - 10 : -d.r - 10)
+        .attr('text-anchor', 'middle')
+        .attr('fill', d => d.color)
+        .attr('font-size', '13px')
+        .attr('font-family', 'Inter, sans-serif')
+        .text(d => d.label);
+
+    nodes.append('text')
+        .attr('y', d => d.id === 'fc' ? d.r * 3 + 18 : d.r + 18)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#888')
+        .attr('font-size', '11px')
+        .attr('font-family', 'Inter, sans-serif')
+        .text(d => d.sub);
+});
+</script>
+
 {% endblock %}

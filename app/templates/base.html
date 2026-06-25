@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serenair</title>
-
+    <title>{% block title %}Serenair{% endblock %}</title>
     <link rel="preconnect" href="https://rsms.me/">
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-    <link rel="stylesheet" href="../static/home.css">
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
     <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.0.min.css">
     <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.0.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@455&display=swap" rel="stylesheet">
@@ -16,16 +14,19 @@
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.0.min.js"></script>
     {% block styles %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     <div class="container">
         <div class="heading">
-            <h1> Seren<span id="air"></span> </h1>
-            <img id="flight" src="../static/images/flight_takeoff.svg" alt="Flight takeoff icon">
+            <h1>Seren<span id="air">air</span></h1>
+            <img id="flight" src="{{ url_for('static', filename='images/flight_takeoff.svg') }}" alt="Flight takeoff icon">
         </div>
-        <main>
-            {% block content %}
-            {% endblock %}
-        </main>
     </div>
+    <div class="back-btn-wrapper">
+        <a href="/" class="back-btn">← Home</a>
+    </div>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
 </body>
 </html>

@@ -9,7 +9,17 @@ import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 import collections, time
 import numpy as np
+import math
+from predict import predict_for_next_instance, \
+    predict_for_next_ten_mins
+import base64
+from sklearn.cluster import DBSCAN
 
+import os,  sys
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
+from workers.db_utils import fetch_and_integrate_data
+from preprocessing.data_prep import prep_live_inference_data
 
 _sparkline_buffer = collections.deque(maxlen=60)
 
@@ -23,6 +33,114 @@ CONTINENT_RANGES = {
     'australia':     {'x': (12000000, 20000000),  'y': (-6000000, -1000000)},
     'global':        {'x': (-20000000, 20000000), 'y': (-7000000, 12000000)},
 }
+
+
+def wgs84_to_web_mercator(lon, lat):
+    k = 6378137
+    x = lon * (k * np.pi / 180.0)
+    y = np.log(np.tan((90 + lat) * np.pi / 360.0)) * k
+    return x, y
+
+def get_heading_from_trail(hist):
+    if len(hist) >= 2:
+        x1, y1 = wgs84_to_web_mercator(hist['longitude'].iloc[-2], hist['latitude'].iloc[-2])
+        x2, y2 = wgs84_to_web_mercator(hist['longitude'].iloc[-1], hist['latitude'].iloc[-1])
+        dx = x2 - x1
+        dy = y2 - y1
+        if dx == 0 and dy == 0:
+            return 0.0
+        return math.atan2(dy, dx) - (math.pi / 2)
+    return 0.0
+
+def get_dynamic_svg_icon(color="#00FFCC"):
+    svg_string = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 0 24 24" width="32" fill="{color}">
+        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 
+                 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 
+                 19v-5.5l8 2.5z"/>
+    </svg>
+    """
+    encoded_string = base64.b64encode(svg_string.strip().encode('utf-8')).decode('utf-8')
+    return f"data:image/svg+xml;base64,{encoded_string}"
+
+ICON_PRED = get_dynamic_svg_icon("#CC0033")
+ICON_ACTUAL = get_dynamic_svg_icon("#FFFFFF")
+
+
+def bokeh_data_helper(continent, task, model, scaler, cap=True):
+    df_live = fetch_and_integrate_data(continent)
+    MAX_PLANES = 15 if task == 'next_ten_mins' else 10
+
+    data = {
+        'current_x': [], 'current_y': [],
+        'predicted_x': [], 'predicted_y': [],
+        'trail_x': [], 'trail_y': [], 'icao24': [],
+        'heading_rad': [], 'icon_pred': [], 'icon_actual': []
+    }
+
+    if df_live.empty:
+        return data
+
+    X_tensor, plane_metadata = prep_live_inference_data(df_live, window_size=10, task=task)
+    df_sorted = df_live.sort_values('timestamp')
+    grouped_history = df_sorted.groupby('icao24')
+
+    if X_tensor.nelement() == 0:
+        unique_planes = sorted(df_live['icao24'].unique())
+        top_n = unique_planes[:MAX_PLANES] if cap else unique_planes
+        latest = df_sorted[df_sorted['icao24'].isin(top_n)].groupby('icao24').tail(1)
+
+        for _, row in latest.iterrows():
+            cx, cy = wgs84_to_web_mercator(row['longitude'], row['latitude'])
+            hist = grouped_history.get_group(row['icao24'])
+            tx, ty = wgs84_to_web_mercator(hist['longitude'].values, hist['latitude'].values)
+
+            data['current_x'].append(cx)
+            data['current_y'].append(cy)
+            data['predicted_x'].append(cx)
+            data['predicted_y'].append(cy)
+            data['trail_x'].append(tx.tolist())
+            data['trail_y'].append(ty.tolist())
+            data['icao24'].append(row['icao24'])
+            data['heading_rad'].append(get_heading_from_trail(hist))
+            data['icon_pred'].append(ICON_PRED)
+            data['icon_actual'].append(ICON_ACTUAL)
+
+    else:
+        if task == 'next_instance':
+            trajectories = predict_for_next_instance(X_tensor, plane_metadata, model, scaler)
+        else:
+            trajectories = predict_for_next_ten_mins(X_tensor, plane_metadata, model, scaler)
+
+        trajectories = sorted(trajectories, key=lambda x: x['icao24'])
+        if cap:
+            trajectories = trajectories[:MAX_PLANES]
+
+        for t in trajectories:
+            cx, cy = wgs84_to_web_mercator(t['current_position']['lon'], t['current_position']['lat'])
+            px, py = wgs84_to_web_mercator(t['prediction_position']['lon'], t['prediction_position']['lat'])
+
+            if t['icao24'] in grouped_history.groups:
+                hist = grouped_history.get_group(t['icao24'])
+                tx, ty = wgs84_to_web_mercator(hist['longitude'].values, hist['latitude'].values)
+                heading = get_heading_from_trail(hist)
+            else:
+                tx, ty = np.array([cx]), np.array([cy])
+                dx, dy = px - cx, py - cy
+                heading = math.atan2(dy, dx) - (math.pi / 2) if not (dx == 0 and dy == 0) else 0.0
+
+            data['current_x'].append(cx)
+            data['current_y'].append(cy)
+            data['predicted_x'].append(px)
+            data['predicted_y'].append(py)
+            data['trail_x'].append(tx.tolist())
+            data['trail_y'].append(ty.tolist())
+            data['icao24'].append(t['icao24'])
+            data['heading_rad'].append(heading)
+            data['icon_pred'].append(ICON_PRED)
+            data['icon_actual'].append(ICON_ACTUAL)
+
+    return data
 
 
 def next_instance_trajectory_map(continent='europe'):
@@ -83,7 +201,7 @@ def next_instance_trajectory_map(continent='europe'):
     return components(layout)
 
 
-def dashboard_fig(df=None):
+def build_dashboard_fig(df=None):
     # --- KPI ---
     total = df['icao24'].nunique() if df is not None and not df.empty else 1452
     fig_kpi = go.Figure(go.Indicator(
@@ -231,10 +349,10 @@ def dashboard_fig(df=None):
     
     
 def next_ten_mins_trajectory_map(continent='europe'):
-    ranges = CONTINENT_RANGES.get('continent', 'europe')
+    ranges = CONTINENT_RANGES.get(continent, CONTINENT_RANGES['europe'])
     
     source = AjaxDataSource(
-        data_url=f'/api/bokeh_data_ten_mins?continent={continent}',
+        data_url=f'/api/bokeh_data_10_mins?continent={continent}',
         polling_interval=10000,
         mode='replace'
     )
@@ -259,5 +377,88 @@ def next_ten_mins_trajectory_map(continent='europe'):
                 anchor="center", angle='heading_rad', source=source)
     hitbox = p.scatter(x='current_x', y='current_y', source=source, size=24, alpha=0, marker='circle')
     p.add_tools(HoverTool(renderers=[hitbox], tooltips=[("ICAO24", "@icao24")]))
+
+    return components(p)
+
+
+def build_cluster_data(bokeh_data):
+
+    result = {
+        'cluster_x': [], 'cluster_y': [], 'cluster_radius': [],
+        'cluster_color': [], 'cluster_count': []
+    }
+
+    if not bokeh_data['predicted_x']:
+        return result
+
+    coords = np.array(list(zip(bokeh_data['predicted_x'], bokeh_data['predicted_y'])))
+    db = DBSCAN(eps=100_000, min_samples=4).fit(coords)
+    labels = db.labels_
+
+    for label in set(labels.tolist()):
+        if label == -1:
+            continue
+        mask = labels == label
+        count = int(mask.sum())
+
+        if count > 500:
+            print(f"Label {label}: skipped (mega-cluster, {count} planes)")
+            continue
+
+        cluster_points = coords[mask]
+        center_x = float(cluster_points[:, 0].mean())
+        center_y = float(cluster_points[:, 1].mean())
+        distances = np.sqrt(
+            (cluster_points[:, 0] - center_x) ** 2 +
+            (cluster_points[:, 1] - center_y) ** 2
+        )
+        radius = float(max(distances.std(), 100_000))
+
+        # Tier coloring
+        if count >= 13:
+            color = '#CC0033'   # red — high density
+        elif count >= 7:
+            color = '#FFBF00'   # yellow — moderate
+        else:
+            color = '#ad4bb4'   # purple — mild
+
+        result['cluster_x'].append(center_x)
+        result['cluster_y'].append(center_y)
+        result['cluster_radius'].append(radius)
+        result['cluster_color'].append(color)
+        result['cluster_count'].append(count)
+
+    return result
+
+
+def crowd_density_map(continent='europe'):
+    ranges = CONTINENT_RANGES.get(continent, CONTINENT_RANGES['europe'])
+
+    source = AjaxDataSource(
+        data_url=f'/api/bokeh_data_crowding_clusters?continent={continent}',
+        polling_interval=10000,
+        mode='replace'
+    )
+
+    p = figure(x_range=ranges['x'], y_range=ranges['y'],
+               x_axis_type="mercator", y_axis_type="mercator",
+               width=1300, height=700, tools="pan,wheel_zoom,reset")
+    p.add_tile(xyz.CartoDB.DarkMatterNoLabels)
+    p.toolbar_location = None
+    p.toolbar.active_scroll = p.select_one(WheelZoomTool)
+    p.background_fill_color = '#0D0D0D'
+    p.border_fill_color = '#0D0D0D'
+    p.outline_line_color = None
+    p.xgrid.grid_line_alpha = 0.05
+    p.ygrid.grid_line_alpha = 0.05
+
+    p.circle(x='cluster_x', y='cluster_y', radius='cluster_radius',
+             source=source,
+             fill_color='cluster_color', fill_alpha=0.2,
+             line_color='cluster_color', line_width=1.5)
+
+    p.add_tools(HoverTool(tooltips=[
+        ("Planes in zone", "@cluster_count"),
+    ]))
 
     return components(p)

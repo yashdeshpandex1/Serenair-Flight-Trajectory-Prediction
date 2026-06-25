@@ -2,9 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask import render_template
 from bokeh_utils import next_instance_trajectory_map, \
-    next_ten_mins_trajectory_map
-from dashboard import build_dashboard_figures
+    next_ten_mins_trajectory_map, bokeh_data_helper, crowd_density_map, \
+        build_cluster_data, build_dashboard_fig
 from inference_utils import initialize_inference_engine
+import redis, json
 
 import os,  sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -14,8 +15,38 @@ from workers.db_utils import fetch_and_integrate_data
 from preprocessing.data_prep import prep_live_inference_data
 from predict import predict_for_next_ten_mins, predict_for_next_instance
 
+
 app = Flask(__name__)
 CORS(app)
+
+# CACHING
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+CACHE_TTL = 8
+
+def get_cached_map_data(continent, task, model, scaler):
+    cache_key = f"bokeh_map:{task}:{continent}"
+    
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception as e:
+        print(f"Reddis error: {e}")
+        
+    data = bokeh_data_helper(
+        continent=continent,
+        task=task,
+        model=model,
+        scaler=scaler
+    )
+    
+    try:
+        redis_client.set(cache_key, json.dumps(data), ex=CACHE_TTL)
+    except Exception as e:
+        print(f"Redis error: {e}")
+    
+    return data
+
 
 # INITIALISE MODELS AND SCALERS
 MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE = initialize_inference_engine(
@@ -24,7 +55,6 @@ MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE = initialize_inference_engine(
 MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS = initialize_inference_engine(
     task='next_ten_mins'
 )
-
 
 # HOME PAGE
 @app.route('/')
@@ -41,6 +71,7 @@ def wake_up():
 # NEXT INSTANCE TRAJECTORY PREDICTION
 @app.route('/trajectories')
 def trajectories_page():
+    trigger_background_worker()
     continent = request.args.get('continent', 'europe')
     
     script, map_div = next_instance_trajectory_map(continent)
@@ -79,29 +110,31 @@ def get_trajectories():
 # DASHBOARD
 @app.route('/dashboard')
 def dashboard_page():
-    figures = build_dashboard_figures()
+    trigger_background_worker()
+    df = fetch_and_integrate_data('global')
+    figures = build_dashboard_fig(df if not df.empty else None)
     return render_template('dashboard.html', figures=figures)
 
 @app.route('/api/dashboard-data')
 def dashboard_data():
     trigger_background_worker()
     df = fetch_and_integrate_data('global')
-    return jsonify(build_dashboard_figures(df if not df.empty else None))
+    return jsonify(build_dashboard_fig(df if not df.empty else None))
 
 
 # TEN MINUTES TRAJECTORY PREDICTION
-@app.route('/ten-min-trajectories')
-def ten_min_trajectories_page():
+@app.route('/ten-mins-trajectories')
+def ten_mins_trajectories_page():
     trigger_background_worker()
     continent = request.args.get('continent', 'europe')
     
     script, map_div = next_ten_mins_trajectory_map(continent)
     
-    return render_template('ten_min_trajectories.html', script=script,
+    return render_template('ten_mins_trajectories.html', script=script,
                            div=map_div, continent=continent)
 
-@app.route('/api/10-min-trajectories', methods=['GET'])
-def get_ten_min_trajectories():
+@app.route('/api/10-mins-trajectories', methods=['GET'])
+def get_ten_mins_trajectories():
     trigger_background_worker()
     continent = request.args.get('region', 'europe')
     
@@ -130,7 +163,56 @@ def get_ten_min_trajectories():
                     'message': '10-Minute Trajectory Prediction active', 
                     'live_planes': [], 'trajectories': trajectories}), 200
 
+
+# CROWD DENSITY PREDICTION
+@app.route('/crowd-density-prediction')
+def crowd_density_prediction():
+    trigger_background_worker()
+    continent = request.args.get('continent', 'global')
+    script, map_div = crowd_density_map(continent)
+    return render_template('crowd_density_prediction.html', script=script, div=map_div, continent=continent)
+    
+@app.route('/api/bokeh_data_crowding_clusters', methods=['GET', 'POST'])
+def bokeh_data_crowding_clusters():
+    continent = request.args.get('continent', 'global')
+    data = bokeh_data_helper(
+        continent=continent,
+        task='next_ten_mins',
+        model=MODEL_NEXT_TEN_MINS,
+        scaler=SCALER_NEXT_TEN_MINS,
+        cap=False
+    )
+    cluster_data = build_cluster_data(data)
+    return jsonify(cluster_data)
+    
+    
+# BOKEH DATA    
+@app.route('/api/bokeh_data', methods=['GET', 'POST'])
+def bokeh_data_next_instance():
+    continent = request.args.get('continent', 'europe')
+    
+    data = get_cached_map_data(
+        continent=continent,
+        task='next_instance',
+        model=MODEL_NEXT_INSTANCE,
+        scaler=SCALER_NEXT_INSTANCE
+    )
+    
+    return jsonify(data)
+
+@app.route('/api/bokeh_data_10_mins', methods=['GET', 'POST'])
+def bokeh_data_next_ten_mins():
+    continent = request.args.get('continent', 'europe')
+    
+    data = get_cached_map_data(
+        continent=continent,
+        task='next_ten_mins',
+        model=MODEL_NEXT_TEN_MINS,
+        scaler=SCALER_NEXT_TEN_MINS
+    )
+    return jsonify(data)
+    
     
     
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, use_reloader=False)
