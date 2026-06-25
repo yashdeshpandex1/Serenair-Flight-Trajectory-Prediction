@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import logging
 from flask_cors import CORS
 from flask import render_template
 from bokeh_utils import next_instance_trajectory_map, \
@@ -19,7 +20,16 @@ from predict import predict_for_next_ten_mins, predict_for_next_instance
 app = Flask(__name__)
 CORS(app)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
 # CACHING
+redis_host = os.getenv('REDIS_HOST', 'localhost')
 redis_client = redis.Redis(host='localhost', port=6379, db=0)
 CACHE_TTL = 8
 
@@ -47,14 +57,22 @@ def get_cached_map_data(continent, task, model, scaler):
     
     return data
 
-
 # INITIALISE MODELS AND SCALERS
-MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE = initialize_inference_engine(
-    task='next_instance'
-)
-MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS = initialize_inference_engine(
-    task='next_ten_mins'
-)
+app.logger.info("Waking up the inference engines..")
+try:
+    app.logger.info("Loading Next Instance (1-Min) Engine")
+    MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE = initialize_inference_engine(
+        task='next_instance'
+    )
+    
+    app.logger.info("Loading Next Ten Mins Engine")
+    MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS = initialize_inference_engine(
+        task='next_ten_mins'
+    )
+    app.logger.info("All ML Engines initialized successfully!")
+except Exception as e:
+    app.logger.critical(f"CRITICAL FAILURE during ML initialization: {e}")
+    
 
 # HOME PAGE
 @app.route('/')
