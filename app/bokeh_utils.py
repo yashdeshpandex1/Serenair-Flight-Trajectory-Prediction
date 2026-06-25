@@ -151,8 +151,7 @@ def next_instance_trajectory_map(continent='europe'):
         polling_interval=10000,
         mode='replace'
     )
-    
-    # Predicted
+
     p1 = figure(x_range=ranges['x'], y_range=ranges['y'],
                 x_axis_type="mercator", y_axis_type="mercator",
                 width=650, height=700, tools="pan,wheel_zoom,reset")
@@ -172,8 +171,7 @@ def next_instance_trajectory_map(continent='europe'):
                  anchor="center", angle='heading_rad', source=source)
     hover_hitbox_pred = p1.scatter(x='current_x', y='current_y', source=source, size=24, alpha=0, marker='circle')
     p1.add_tools(HoverTool(renderers=[hover_hitbox_pred], tooltips=[("ICAO24", "@icao24")]))
-    
-    # Actual
+
     p2 = figure(x_range=p1.x_range, y_range=p1.y_range,
                 x_axis_type="mercator", y_axis_type="mercator",
                 width=650, height=700, tools="pan,wheel_zoom,reset")
@@ -191,12 +189,26 @@ def next_instance_trajectory_map(continent='europe'):
                  anchor="center", angle='heading_rad', source=source)
     hover_hitbox_actual = p2.scatter(x='current_x', y='current_y', source=source, size=24, alpha=0, marker='circle')
     p2.add_tools(HoverTool(renderers=[hover_hitbox_actual], tooltips=[("ICAO24", "@icao24")]))
-    
-    label_style = "display:flex; align-items:center; justify-content:center; margin-top:12px; color:white; font-family:'Source Serif 4', serif; font-weight:455; font-size:22px; margin:0;"
-    label1 = Div(text=f"<div style='{label_style}'>Predicted</div>", styles={'width': '650px', 'text-align': 'center'})
-    label2 = Div(text=f"<div style='{label_style}'>Actual</div>", styles={'width': '650px', 'text-align': 'center'})
-    
-    layout = row(column(label1, p1), column(label2, p2))
+
+    label1 = Div(text="""
+        <div style="display:flex; align-items:center; gap:10px; justify-content:center; margin-top:12px">
+            <h2 style="color:white; font-family:'Source Serif 4', serif; font-weight:455; font-size:22px; margin:0;">
+                Predicted
+            </h2>
+        </div>
+    """, styles={'width': '650px', 'text-align': 'center'})
+
+    label2 = Div(text="""
+        <div style="display:flex; align-items:center; gap:10px; justify-content:center; margin-top:12px">
+            <h2 style="color:white; font-family:'Source Serif 4', serif; font-weight:455; font-size:22px; margin:0;">
+                Actual
+            </h2>
+        </div>
+    """, styles={'width': '650px', 'text-align': 'center'})
+
+    col1 = column(label1, p1)
+    col2 = column(label2, p2)
+    layout = row(col1, col2)
     
     return components(layout)
 
