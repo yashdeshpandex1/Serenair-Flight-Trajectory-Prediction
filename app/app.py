@@ -7,7 +7,6 @@ from inference_utils import initialize_inference_engine
 import redis
 import json
 
-
 import os
 import sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -33,30 +32,67 @@ logging.basicConfig(
 redis_host = os.getenv('REDIS_HOST', 'localhost')
 redis_client = redis.Redis(host=redis_host, port=6379, db=0)
 CACHE_TTL = 15
+MAP_COMPONENTS_TTL = 3600 
+
+
+def get_cached_map_components(continent, map_fn):
+    cache_key = f"map_components:{map_fn.__name__}:{continent}"
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            result = json.loads(cached)
+            return result['script'], result['div']
+    except Exception as e:
+        app.logger.error(f"Redis error: {e}")
+
+    script, div = map_fn(continent)
+    try:
+        redis_client.set(cache_key, json.dumps({'script': script, 'div': div}), ex=MAP_COMPONENTS_TTL)
+    except Exception as e:
+        app.logger.error(f"Redis set error: {e}")
+    return script, div
+
 
 def get_cached_map_data(continent, task, model, scaler):
     cache_key = f"bokeh_map:{task}:{continent}"
-    
     try:
         cached = redis_client.get(cache_key)
         if cached:
             return json.loads(cached)
     except Exception as e:
         app.logger.error(f"Redis error: {e}")
-        
+
     data = bokeh_data_helper(
         continent=continent,
         task=task,
         model=model,
         scaler=scaler
     )
-    
     try:
         redis_client.set(cache_key, json.dumps(data), ex=CACHE_TTL)
     except Exception as e:
-        print(f"Redis error: {e}")
-    
+        app.logger.error(f"Redis set error: {e}")
     return data
+
+def get_cached_dashboard_figures(cache_ttl=30):
+    cache_key = "dashboard:figures"
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception as e:
+        app.logger.error(f"Redis error: {e}")
+
+    df = fetch_and_integrate_data('global')
+    figures = build_dashboard_fig(df if not df.empty else None)
+    
+    try:
+        redis_client.set(cache_key, json.dumps(figures), ex=cache_ttl)
+    except Exception as e:
+        app.logger.error(f"Redis set error: {e}")
+    
+    return figures
+
 
 # INITIALISE MODELS AND SCALERS
 app.logger.info("Waking up the inference engines..")
@@ -65,7 +101,6 @@ try:
     MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE = initialize_inference_engine(
         task='next_instance'
     )
-    
     app.logger.info("Loading Next Ten Mins Engine")
     MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS = initialize_inference_engine(
         task='next_ten_mins'
@@ -75,7 +110,7 @@ try:
                MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS)
 except Exception as e:
     app.logger.critical(f"CRITICAL FAILURE during ML initialization: {e}")
-    
+
 
 # HOME PAGE
 @app.route('/')
@@ -94,37 +129,34 @@ def wake_up():
 def trajectories_page():
     trigger_background_worker()
     continent = request.args.get('continent', 'europe')
-    
-    script, map_div = next_instance_trajectory_map(continent)
-    
+    script, map_div = get_cached_map_components(continent, next_instance_trajectory_map)
     return render_template('trajectories.html', script=script,
                            div=map_div, continent=continent)
-    
+
 @app.route('/api/trajectories', methods=['GET'])
 def get_trajectories():
     trigger_background_worker()
     continent = request.args.get('continent', 'europe')
     df_live = fetch_and_integrate_data(continent)
-    
+
     if df_live.empty:
-        return jsonify({'status': 'Waking up', 
+        return jsonify({'status': 'Waking up',
                         'message': 'Waking up the script. Please wait...',
-                        'live_planes': [], 
+                        'live_planes': [],
                         'trajectories': []}), 202
-        
-    X_tensor, plane_metadata = prep_live_inference_data(df_live, 
+
+    X_tensor, plane_metadata = prep_live_inference_data(df_live,
                                                         window_size=10,
                                                         task='next_instance')
-    
     if X_tensor.nelement() == 0:
         latest_positions = df_live.sort_values('timestamp').groupby('icao24').tail(1)
         live_planes = [{'icao24': row['icao24'], 'lat': row['latitude'], 'lon': row['longitude']} for _, row in latest_positions.iterrows()]
         return jsonify({'status': 'calibrating', 'message': 'collecting 10 timestamps..', 'live_planes': live_planes, 'trajectories': []}), 206
-    
+
     trajectories = predict_for_next_instance(X_tensor, plane_metadata,
                                              model=MODEL_NEXT_INSTANCE,
                                              scaler=SCALER_NEXT_INSTANCE)
-    return jsonify({'status': 'success!', 'message': 'collecting 10 timestamps..', 
+    return jsonify({'status': 'success!', 'message': 'collecting 10 timestamps..',
                     'live_planes': [], 'trajectories': trajectories})
 
 
@@ -132,15 +164,14 @@ def get_trajectories():
 @app.route('/dashboard')
 def dashboard_page():
     trigger_background_worker()
-    df = fetch_and_integrate_data('global')
-    figures = build_dashboard_fig(df if not df.empty else None)
+    figures = get_cached_dashboard_figures()
     return render_template('dashboard.html', figures=figures)
 
 @app.route('/api/dashboard-data')
 def dashboard_data():
     trigger_background_worker()
-    df = fetch_and_integrate_data('global')
-    return jsonify(build_dashboard_fig(df if not df.empty else None))
+    figures = get_cached_dashboard_figures()
+    return jsonify(figures)
 
 
 # TEN MINUTES TRAJECTORY PREDICTION
@@ -148,9 +179,7 @@ def dashboard_data():
 def ten_mins_trajectories_page():
     trigger_background_worker()
     continent = request.args.get('continent', 'europe')
-    
-    script, map_div = next_ten_mins_trajectory_map(continent)
-    
+    script, map_div = get_cached_map_components(continent, next_ten_mins_trajectory_map)
     return render_template('ten_mins_trajectories.html', script=script,
                            div=map_div, continent=continent)
 
@@ -158,30 +187,29 @@ def ten_mins_trajectories_page():
 def get_ten_mins_trajectories():
     trigger_background_worker()
     continent = request.args.get('continent', 'europe')
-    
+
     df_live = fetch_and_integrate_data(continent)
     if df_live.empty:
-        return jsonify({'status': 'Waking up', 
-                        'message': 'Waking up the script. Please wait..', 
+        return jsonify({'status': 'Waking up',
+                        'message': 'Waking up the script. Please wait..',
                         'live_planes': [], 'trajectories': []}), 202
-        
-    X_tensor, plane_metadata = prep_live_inference_data(df_live, 
+
+    X_tensor, plane_metadata = prep_live_inference_data(df_live,
                                                         window_size=10,
                                                         task='next_ten_mins')
-
     if X_tensor.nelement() == 0:
         latest_positions = df_live.sort_values('timestamp').groupby('icao24').tail(1)
-        live_planes = [{'icao24': row['icao24'], 'lat': row['latitude'], 
+        live_planes = [{'icao24': row['icao24'], 'lat': row['latitude'],
                         'lon': row['longitude']} for _, row in latest_positions.iterrows()]
-        return jsonify({'status': 'calibrating', 
-                        'message': 'collecting 10 timestamps..', 
+        return jsonify({'status': 'calibrating',
+                        'message': 'collecting 10 timestamps..',
                         'live_planes': live_planes, 'trajectories': []}), 206
-    
+
     trajectories = predict_for_next_ten_mins(X_tensor, plane_metadata,
                                              model=MODEL_NEXT_TEN_MINS,
                                              scaler=SCALER_NEXT_TEN_MINS)
-    return jsonify({'status': 'success!', 
-                    'message': '10-Minute Trajectory Prediction active', 
+    return jsonify({'status': 'success!',
+                    'message': '10-Minute Trajectory Prediction active',
                     'live_planes': [], 'trajectories': trajectories}), 200
 
 
@@ -190,9 +218,9 @@ def get_ten_mins_trajectories():
 def crowd_density_prediction():
     trigger_background_worker()
     continent = request.args.get('continent', 'global')
-    script, map_div = crowd_density_map(continent)
+    script, map_div = get_cached_map_components(continent, crowd_density_map)
     return render_template('crowd_density_prediction.html', script=script, div=map_div, continent=continent)
-    
+
 @app.route('/api/bokeh_data_crowding_clusters', methods=['GET', 'POST'])
 def bokeh_data_crowding_clusters():
     continent = request.args.get('continent', 'global')
@@ -205,26 +233,23 @@ def bokeh_data_crowding_clusters():
     )
     cluster_data = build_cluster_data(data)
     return jsonify(cluster_data)
-    
-    
-# BOKEH DATA    
+
+
+# BOKEH DATA
 @app.route('/api/bokeh_data', methods=['GET', 'POST'])
 def bokeh_data_next_instance():
     continent = request.args.get('continent', 'europe')
-    
     data = get_cached_map_data(
         continent=continent,
         task='next_instance',
         model=MODEL_NEXT_INSTANCE,
         scaler=SCALER_NEXT_INSTANCE
     )
-    
     return jsonify(data)
 
 @app.route('/api/bokeh_data_10_mins', methods=['GET', 'POST'])
 def bokeh_data_next_ten_mins():
     continent = request.args.get('continent', 'europe')
-    
     data = get_cached_map_data(
         continent=continent,
         task='next_ten_mins',
@@ -232,8 +257,7 @@ def bokeh_data_next_ten_mins():
         scaler=SCALER_NEXT_TEN_MINS
     )
     return jsonify(data)
-    
-    
-    
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False)
