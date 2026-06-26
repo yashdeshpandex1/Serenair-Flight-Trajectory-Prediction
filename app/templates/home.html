@@ -84,68 +84,38 @@
 </div>
 
 <style>
-.social-corner {
-    position: absolute;
-    bottom: 2rem;
-    right: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-}
-.social-label {
-    font-size: 11px;
-    font-family: 'Inter', sans-serif;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin: 0;
-}
-.social-links {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-.social-icon {
-    color: #555;
-    text-decoration: none;
-    transition: color 0.2s ease;
-    display: flex;
-    align-items: center;
-}
-.social-icon:hover {
-    color: #ffffff;
-}
+.social-corner { position: absolute; bottom: 2rem; right: 2.5rem; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.social-label { font-size: 11px; font-family: 'Inter', sans-serif; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin: 0; }
+.social-links { display: flex; gap: 16px; align-items: center; }
+.social-icon { color: #555; text-decoration: none; transition: color 0.2s ease; display: flex; align-items: center; }
+.social-icon:hover { color: #ffffff; }
 </style>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. D3 Network Visualization Logic
     const width = 1200;
     const height = 300;
-
-    const svg = d3.select('#d3-canvas')
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height);
+    const svg = d3.select('#d3-canvas').append('svg').attr('width', width).attr('height', height);
 
     const networkNodes = [
-        {id: 'i1',     x: 150,  y: 60,  label: 'T-9', sub: 'current',        r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
-        {id: 'i2',     x: 150,  y: 150, label: 'T-5', sub: 'midpoint',       r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
-        {id: 'i3',     x: 150,  y: 240, label: 'T-0', sub: 'window start',   r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
-        {id: 'lstm1',  x: 400,  y: 150, label: 'LSTM Layer 1', sub: '(128, 10, 64)', r: 40, color: '#AAAAAA', shape: 'square', layer: 1},
-        {id: 'lstm2',  x: 620,  y: 150, label: 'LSTM Layer 2', sub: '(128, 10, 64)', r: 40, color: '#AAAAAA', shape: 'square', layer: 2},
-        {id: 'fc',     x: 830,  y: 150, label: 'FC Layer',     sub: '(128, 2)',      r: 35, color: '#AAAAAA', shape: 'square', layer: 3},
-        {id: 'output', x: 1020, y: 150, label: 'Output',       sub: '(Δlat, Δlon)', r: 25, color: '#AAAAAA', shape: 'circle', layer: 4},
+        {id: 'i1', x: 150, y: 60, label: 'T-9', sub: 'current', r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
+        {id: 'i2', x: 150, y: 150, label: 'T-5', sub: 'midpoint', r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
+        {id: 'i3', x: 150, y: 240, label: 'T-0', sub: 'window start', r: 25, color: '#AAAAAA', shape: 'circle', layer: 0},
+        {id: 'lstm1', x: 400, y: 150, label: 'LSTM Layer 1', sub: '(128, 10, 64)', r: 40, color: '#AAAAAA', shape: 'square', layer: 1},
+        {id: 'lstm2', x: 620, y: 150, label: 'LSTM Layer 2', sub: '(128, 10, 64)', r: 40, color: '#AAAAAA', shape: 'square', layer: 2},
+        {id: 'fc', x: 830, y: 150, label: 'FC Layer', sub: '(128, 2)', r: 35, color: '#AAAAAA', shape: 'square', layer: 3},
+        {id: 'output', x: 1020, y: 150, label: 'Output', sub: '(Δlat, Δlon)', r: 25, color: '#AAAAAA', shape: 'circle', layer: 4},
     ];
 
     const networkLinks = [
-        {source: 'i1',    target: 'lstm1',  order: 0, layer: 1},
-        {source: 'i2',    target: 'lstm1',  order: 1, layer: 1},
-        {source: 'i3',    target: 'lstm1',  order: 2, layer: 1},
-        {source: 'lstm1', target: 'lstm2',  order: 3, layer: 2},
-        {source: 'lstm2', target: 'fc',     order: 4, layer: 3},
-        {source: 'fc',    target: 'output', order: 5, layer: 4},
+        {source: 'i1', target: 'lstm1', order: 0, layer: 1},
+        {source: 'i2', target: 'lstm1', order: 1, layer: 1},
+        {source: 'i3', target: 'lstm1', order: 2, layer: 1},
+        {source: 'lstm1', target: 'lstm2', order: 3, layer: 2},
+        {source: 'lstm2', target: 'fc', order: 4, layer: 3},
+        {source: 'fc', target: 'output', order: 5, layer: 4},
     ];
 
     const nodeById = d3.index(networkNodes, d => d.id);
@@ -156,108 +126,40 @@ document.addEventListener('DOMContentLoaded', function() {
         layer: l.layer
     }));
 
-    const linkGenerator = d3.linkHorizontal()
-        .x(d => d.x)
-        .y(d => d.y);
+    const linkGenerator = d3.linkHorizontal().x(d => d.x).y(d => d.y);
 
-    svg.selectAll('.link-base')
-        .data(mappedLinks)
-        .enter()
-        .append('path')
-        .attr('fill', 'none')
-        .attr('stroke', '#333333')
-        .attr('stroke-width', 2)
-        .attr('d', linkGenerator);
+    svg.selectAll('.link-base').data(mappedLinks).enter().append('path').attr('fill', 'none').attr('stroke', '#333333').attr('stroke-width', 2).attr('d', linkGenerator);
 
-    const animatedLinks = svg.selectAll('.link-animated')
-        .data(mappedLinks)
-        .enter()
-        .append('path')
-        .attr('fill', 'none')
-        .attr('stroke', '#CC0033')
-        .attr('stroke-width', 2)
-        .attr('pointer-events', 'none')
-        .attr('d', linkGenerator);
+    const animatedLinks = svg.selectAll('.link-animated').data(mappedLinks).enter().append('path').attr('fill', 'none').attr('stroke', '#CC0033').attr('stroke-width', 2).attr('pointer-events', 'none').attr('d', linkGenerator);
 
     const totalLengths = [];
-    animatedLinks.each(function() {
-        totalLengths.push(this.getTotalLength());
-    });
-
-    animatedLinks.each(function(d, i) {
-        d3.select(this)
-            .attr('stroke-dasharray', totalLengths[i])
-            .attr('stroke-dashoffset', totalLengths[i]);
-    });
-
-    const STEP_DELAY = 400;
-    const STEP_DUR   = 600;
-    const PAUSE      = 800;
+    animatedLinks.each(function() { totalLengths.push(this.getTotalLength()); });
+    animatedLinks.each(function(d, i) { d3.select(this).attr('stroke-dasharray', totalLengths[i]).attr('stroke-dashoffset', totalLengths[i]); });
 
     function runCycle() {
+        animatedLinks.each(function(d, i) { d3.select(this).interrupt().attr('stroke-dashoffset', totalLengths[i]); });
         animatedLinks.each(function(d, i) {
-            d3.select(this)
-                .interrupt()
-                .attr('stroke-dashoffset', totalLengths[i]);
-        });
-
-        animatedLinks.each(function(d, i) {
-            d3.select(this)
-                .transition()
-                .delay(d.order * STEP_DELAY)
-                .duration(STEP_DUR)
-                .ease(d3.easeCubicInOut)
-                .attr('stroke-dashoffset', 0)
-                .on('end', function() {
-                    if (d.order === mappedLinks.length - 1) {
-                        setTimeout(runCycle, PAUSE);
-                    }
-                });
+            d3.select(this).transition().delay(d.order * 400).duration(600).ease(d3.easeCubicInOut).attr('stroke-dashoffset', 0).on('end', function() {
+                if (d.order === mappedLinks.length - 1) setTimeout(runCycle, 800);
+            });
         });
     }
-
     runCycle();
 
-    const nodes = svg.selectAll('.node')
-        .data(networkNodes)
-        .enter()
-        .append('g')
-        .attr('transform', d => `translate(${d.x},${d.y})`);
+    const nodes = svg.selectAll('.node').data(networkNodes).enter().append('g').attr('transform', d => `translate(${d.x},${d.y})`);
+    nodes.filter(d => d.shape === 'circle').append('circle').attr('r', d => d.r).attr('fill', '#000').attr('stroke', d => d.color).attr('stroke-width', 2);
+    nodes.filter(d => d.shape === 'square').append('rect').attr('x', d => -d.r).attr('y', d => d.id === 'fc' ? -d.r * 3 : -d.r).attr('width', d => d.r * 2).attr('height', d => d.id === 'fc' ? d.r * 6 : d.r * 2).attr('rx', 4).attr('fill', '#000').attr('stroke', d => d.color).attr('stroke-width', 2);
+    nodes.append('text').attr('y', d => d.id === 'fc' ? -d.r * 3 - 10 : -d.r - 10).attr('text-anchor', 'middle').attr('fill', d => d.color).attr('font-size', '13px').attr('font-family', 'Inter, sans-serif').text(d => d.label);
+    nodes.append('text').attr('y', d => d.id === 'fc' ? d.r * 3 + 18 : d.r + 18).attr('text-anchor', 'middle').attr('fill', '#888').attr('font-size', '11px').attr('font-family', 'Inter, sans-serif').text(d => d.sub);
 
-    nodes.filter(d => d.shape === 'circle')
-        .append('circle')
-        .attr('r', d => d.r)
-        .attr('fill', '#000')
-        .attr('stroke', d => d.color)
-        .attr('stroke-width', 2);
-
-    nodes.filter(d => d.shape === 'square')
-        .append('rect')
-        .attr('x', d => -d.r)
-        .attr('y', d => d.id === 'fc' ? -d.r * 3 : -d.r)
-        .attr('width',  d => d.r * 2)
-        .attr('height', d => d.id === 'fc' ? d.r * 6 : d.r * 2)
-        .attr('rx', 4)
-        .attr('fill', '#000')
-        .attr('stroke', d => d.color)
-        .attr('stroke-width', 2);
-
-    nodes.append('text')
-        .attr('y', d => d.id === 'fc' ? -d.r * 3 - 10 : -d.r - 10)
-        .attr('text-anchor', 'middle')
-        .attr('fill', d => d.color)
-        .attr('font-size', '13px')
-        .attr('font-family', 'Inter, sans-serif')
-        .text(d => d.label);
-
-    nodes.append('text')
-        .attr('y', d => d.id === 'fc' ? d.r * 3 + 18 : d.r + 18)
-        .attr('text-anchor', 'middle')
-        .attr('fill', '#888')
-        .attr('font-size', '11px')
-        .attr('font-family', 'Inter, sans-serif')
-        .text(d => d.sub);
+    // 2. Intelligent Wake-up Logic
+    document.querySelectorAll('.banner-right-link, .card-link, .banner-side-link').forEach(link => {
+        link.addEventListener('click', function() {
+            fetch('/api/wakeup', { method: 'POST' })
+                .then(() => console.log("Worker signaled to wake up."))
+                .catch(err => console.error("Error waking worker:", err));
+        });
+    });
 });
 </script>
-
 {% endblock %}
