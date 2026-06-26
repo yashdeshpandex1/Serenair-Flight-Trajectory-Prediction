@@ -74,24 +74,6 @@ def get_cached_map_data(continent, task, model, scaler):
         app.logger.error(f"Redis set error: {e}")
     return data
 
-def get_cached_dashboard_figures(cache_ttl=30):
-    cache_key = "dashboard:figures"
-    try:
-        cached = redis_client.get(cache_key)
-        if cached:
-            return json.loads(cached)
-    except Exception as e:
-        app.logger.error(f"Redis error: {e}")
-
-    df = fetch_and_integrate_data('global')
-    figures = build_dashboard_fig(df if not df.empty else None)
-    
-    try:
-        redis_client.set(cache_key, json.dumps(figures), ex=cache_ttl)
-    except Exception as e:
-        app.logger.error(f"Redis set error: {e}")
-    
-    return figures
 
 
 # INITIALISE MODELS AND SCALERS
@@ -110,6 +92,32 @@ try:
                MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS)
 except Exception as e:
     app.logger.critical(f"CRITICAL FAILURE during ML initialization: {e}")
+
+
+
+def get_cached_cluster_data(continent, cache_ttl=15):
+    cache_key = f"crowd_clusters:{continent}"
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception as e:
+        app.logger.error(f"Redis error: {e}")
+
+    data = bokeh_data_helper(
+        continent=continent,
+        task='next_ten_mins',
+        model=MODEL_NEXT_TEN_MINS,
+        scaler=SCALER_NEXT_TEN_MINS,
+        cap=False
+    )
+    cluster_data = build_cluster_data(data)
+    try:
+        redis_client.set(cache_key, json.dumps(cluster_data), ex=cache_ttl)
+    except Exception as e:
+        app.logger.error(f"Redis set error: {e}")
+    return cluster_data
+
 
 
 # HOME PAGE
@@ -164,13 +172,25 @@ def get_trajectories():
 @app.route('/dashboard')
 def dashboard_page():
     trigger_background_worker()
-    figures = get_cached_dashboard_figures()
+    cache_key = "dashboard:figures"
+    try:
+        cached = redis_client.get(cache_key)
+        figures = json.loads(cached) if cached else None
+    except Exception:
+        figures = None
     return render_template('dashboard.html', figures=figures)
 
 @app.route('/api/dashboard-data')
 def dashboard_data():
     trigger_background_worker()
-    figures = get_cached_dashboard_figures()
+    cache_key = "dashboard:figures"
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            return jsonify(json.loads(cached))
+    except Exception:
+        pass
+    figures = build_dashboard_fig(None)
     return jsonify(figures)
 
 
@@ -217,21 +237,14 @@ def get_ten_mins_trajectories():
 @app.route('/crowd-density-prediction')
 def crowd_density_prediction():
     trigger_background_worker()
-    continent = request.args.get('continent', 'global')
+    continent = request.args.get('continent', 'europe')
     script, map_div = get_cached_map_components(continent, crowd_density_map)
     return render_template('crowd_density_prediction.html', script=script, div=map_div, continent=continent)
 
 @app.route('/api/bokeh_data_crowding_clusters', methods=['GET', 'POST'])
 def bokeh_data_crowding_clusters():
     continent = request.args.get('continent', 'global')
-    data = bokeh_data_helper(
-        continent=continent,
-        task='next_ten_mins',
-        model=MODEL_NEXT_TEN_MINS,
-        scaler=SCALER_NEXT_TEN_MINS,
-        cap=False
-    )
-    cluster_data = build_cluster_data(data)
+    cluster_data = get_cached_cluster_data(continent)
     return jsonify(cluster_data)
 
 

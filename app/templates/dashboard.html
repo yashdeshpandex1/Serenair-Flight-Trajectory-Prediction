@@ -85,7 +85,9 @@
     <p>Velocity (m/s) vs. Altitude (m)</p>
   </div>
 </div>
+
 <script>
+  const basePath = '/dashboard';
   const CFG = { displayModeBar: false, responsive: true };
   const LAYOUT_BASE = {
     paper_bgcolor: '#0D0D0D',
@@ -96,6 +98,7 @@
   };
   const AXIS      = { showgrid: true,  gridcolor: '#333333', color: '#888888', zeroline: false };
   const AXIS_FLAT = { showgrid: false,                       color: '#888888', zeroline: false };
+
   function draw(f) {
       Plotly.react('plot-kpi', f.kpi.data,
         { ...f.kpi.layout, ...LAYOUT_BASE, margin: {l:0,r:0,t:10,b:10} }, CFG);
@@ -121,14 +124,22 @@
           xaxis: { ...AXIS },
           yaxis: { ...AXIS } }, CFG);
   }
-  // Initial render from server-side data injected by Flask
-  draw({{ figures | tojson }});
-  // Live poll every 10 seconds
-  setInterval(() => {
-    fetch('/api/dashboard-data')
+
+  function fetchAndDraw() {
+    const continent = new URLSearchParams(window.location.search).get('continent') || 'europe';
+    fetch(`/api/dashboard-data`)
       .then(r => r.json())
       .then(draw)
       .catch(console.error);
-  }, 10000);
+  }
+
+  const serverFigures = {{ figures | tojson }};
+  if (serverFigures) {
+    draw(serverFigures);   // cache was warm, instant render
+  } else {
+    fetchAndDraw();        // cache was cold, async fetch
+  }
+
+  setInterval(fetchAndDraw, 10000);
 </script>
 {% endblock %}

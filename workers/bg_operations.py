@@ -27,7 +27,7 @@ SCALER_NEXT_INSTANCE = None
 MODEL_NEXT_TEN_MINS = None
 SCALER_NEXT_TEN_MINS = None
 
-PRECOMPUTE_EVERY = 3
+PRECOMPUTE_EVERY = 1
 precompute_counter = 0
 
 def set_models(model_ni, scaler_ni, model_ntm, scaler_ntm):
@@ -38,7 +38,7 @@ def set_models(model_ni, scaler_ni, model_ntm, scaler_ntm):
     SCALER_NEXT_TEN_MINS = scaler_ntm
     
 def precompute_preds(df_global):
-    from bokeh_utils import bokeh_data_helper
+    from bokeh_utils import bokeh_data_helper, build_cluster_data
     from workers.db_utils import filter_by_continent
     
     if MODEL_NEXT_INSTANCE is None or MODEL_NEXT_TEN_MINS is None:
@@ -63,12 +63,27 @@ def precompute_preds(df_global):
                 logger.info(f"Cached {task}:{continent} ({len(data.get('icao24', []))} planes)")
             except Exception as e:
                 logger.error(f"Precompute failed for {task}:{continent}: {e}")
+        try: 
+            cluster_raw_data = bokeh_data_helper(
+                continent, 'next_ten_mins', MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS,
+                cap=False, df_override=df_continent
+            )
+            cluster_data = build_cluster_data(cluster_raw_data)
+            cluster_cache_key = f"crowd_clusters:{continent}"
+            redis_client.set(cluster_cache_key, json.dumps(cluster_data), ex=CACHE_TTL)
+            logger.info(f"Cached crowd_clusters:{continent} ({len(cluster_data.get('cluster_x', []))} clusters)")
+        except Exception as e:
+            logger.error(f"Precompute failed for crowd_clusters:{continent}: {e}")
 
 def precompute_dashboard(df_global):
     from bokeh_utils import build_dashboard_fig
     
+    if df_global.empty:
+        logger.warning("Skipping dashboard precompute: no global data")
+        return
+    
     try:
-        figures = build_dashboard_fig(df_global if not df_global.empty else None)
+        figures = build_dashboard_fig(df_global)
         cache_key = "dashboard:figures"
         redis_client.set(cache_key, json.dumps(figures), ex=CACHE_TTL)
         logger.info("Precomputed dashboard")

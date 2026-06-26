@@ -8,7 +8,7 @@
 {% block content%}
 <div class="toggle-nav">
     <a href="/ten-mins-trajectories?continent={{ continent }}" class="toggle-btn active">10 Mins Future Trajectory</a>
-    <a href="/crowding-density-prediction?continent={{ continent }}" class="toggle-btn">Crowd Density Prediction</a>
+    <a href="/crowd-density-prediction?continent={{ continent }}" class="toggle-btn">Crowd Density Prediction</a>
 </div>
 <div class="maps-wrapper">
     {{ div | safe }}
@@ -22,7 +22,7 @@
         </span>
         Predicted position in around 10 minutes~
     </div>
-    <script>const basePath = '/ten-min-trajectories';</script>
+    <script>const basePath = '/ten-mins-trajectories';</script>
     {% include 'continent_selector.html' %}
 </div>
 {{ script | safe }}
