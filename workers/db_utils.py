@@ -115,6 +115,50 @@ def fetch_and_integrate_data(continent='europe'):
         print(f"Failed to query database: {e}")
         return pd.DataFrame()
                 
+def fetch_global_data():
+    conn_string = get_connection_uri()
+    query = """
+        SELECT 
+            s.icao24, s.callsign, s.timestamp, s.longitude,
+            s.latitude, s.baro_altitude, s.on_ground, s.velocity,
+            s.true_track, s.vertical_rate, s.geo_altitude,
+            a.category, s.squawk
+        FROM aircraft_states s
+        JOIN aircraft a on s.icao24 = a.icao24
+        ORDER BY s.timestamp ASC;
+    """
+    try:
+        with psycopg.connect(conn_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                rows = cur.fetchall()
+                if not rows:
+                    return pd.DataFrame()
+                colnames = [desc[0] for desc in cur.description]
+        df = pd.DataFrame(rows, columns=colnames)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+        temp, wind_speed, wind_dir = fetch_current_weather(0.0, 0.0)
+        if temp is not None:
+            df['temperature'] = temp
+            df['wind_speed'] = wind_speed
+            df['wind_dir'] = wind_dir
+        else:
+            df['temperature'] = pd.NA
+            df['wind_speed'] = pd.NA
+            df['wind_dir'] = pd.NA
+        return df
+    except Exception as e:
+        print(f"Failed to query database: {e}")
+        return pd.DataFrame()
+    
+def filter_by_continent(df, continent='europe'):
+    if df.empty:
+        return df
+    min_lat, max_lat, min_lon, max_lon = get_bbox(continent)
+    return df[
+        (df['latitude'] >= min_lat) & (df['latitude'] <= max_lat) &
+        (df['longitude'] >= min_lon) & (df['longitude'] <= max_lon)
+    ].copy()
                 
 def get_bbox(continent_name='europe'):
     

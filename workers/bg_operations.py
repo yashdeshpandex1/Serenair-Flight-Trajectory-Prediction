@@ -5,6 +5,9 @@ from datetime import datetime
 from workers.fetch_live_data import fetch_live_flights_data
 from workers.db_utils import prod_database_ingestion, prune_old_data
 import logging
+import redis
+import json
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +17,53 @@ TIMEOUT_SECONDS = 120
 FREQUENCY = 10
 worker_lock = threading.Lock()
 
+redis_client = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'), port=6379, db=0)
+CACHE_TTL = 15
 
+CONTINENTS = ['europe', 'north_america', 'south_america', 'asia', 'africa', 'australia', 'global']
+
+MODEL_NEXT_INSTANCE = None
+SCALER_NEXT_INSTANCE = None
+MODEL_NEXT_TEN_MINS = None
+SCALER_NEXT_TEN_MINS = None
+
+def set_models(model_ni, scaler_ni, model_ntm, scaler_ntm):
+    global MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE, MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS
+    MODEL_NEXT_INSTANCE = model_ni
+    SCALER_NEXT_INSTANCE = scaler_ni
+    MODEL_NEXT_TEN_MINS = model_ntm
+    SCALER_NEXT_TEN_MINS = scaler_ntm
+    
+def precompute_preds():
+    from bokeh_utils import bokeh_data_helper
+    from workers.db_utils import fetch_global_data, filter_by_continent
+    
+    if MODEL_NEXT_INSTANCE is None or MODEL_NEXT_TEN_MINS is None:
+        logger.warning("Models not set, skipping precompute")
+        return
+    
+    df_global = fetch_global_data()
+    if df_global.empty:
+        logger.warning("No global data available for precompute")
+        return
+    
+    for continent in CONTINENTS:
+        df_continent = filter_by_continent(df_global, continent)
+        for task, model, scaler in [
+            ('next_instance', MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE),
+            ('next_ten_mins', MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS)
+        ]:
+            try:
+                data = bokeh_data_helper(
+                    continent, task, model, scaler, df_override=df_continent)
+                cache_key = f"bokeh_map:{task}:{continent}"
+                redis_client.set(cache_key, json.dumps(data), ex=CACHE_TTL)
+                logger.info(f"Cached {task}:{continent} ({len(data.get('icao24', []))} planes)")
+            except Exception as e:
+                logger.error(f"Precompute failed for {task}:{continent}: {e}")
+    
+    
+    
 def start_background_data_collection():
     global SCRIPT_RUNNING, WAKE_UP
     logger.info("Background data collector running.")
@@ -32,6 +81,7 @@ def start_background_data_collection():
                 prod_database_ingestion(df_flights, conn_string)
                 prune_old_data(conn_string, tolerance_mins=15)
                 logger.info(f"[{now.strftime('%H:%M:%S')}] Saved {len(df_flights)} flights globally.")
+                precompute_preds()
             else:
                 logger.info(f"[{now.strftime('%H:%M:%S')}] No active trajectories found.")
 

@@ -67,8 +67,8 @@ ICON_PRED = get_dynamic_svg_icon("#CC0033")
 ICON_ACTUAL = get_dynamic_svg_icon("#FFFFFF")
 
 
-def bokeh_data_helper(continent, task, model, scaler, cap=True):
-    df_live = fetch_and_integrate_data(continent)
+def bokeh_data_helper(continent, task, model, scaler, cap=True, df_override=None):
+    df_live = df_override if df_override is not None else fetch_and_integrate_data(continent)
     MAX_PLANES = 15 if task == 'next_ten_mins' else 10
 
     data = {

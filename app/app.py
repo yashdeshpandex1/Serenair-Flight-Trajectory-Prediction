@@ -12,7 +12,7 @@ import os
 import sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
-from workers.bg_operations import trigger_background_worker
+from workers.bg_operations import trigger_background_worker, set_models
 from workers.db_utils import fetch_and_integrate_data
 from preprocessing.data_prep import prep_live_inference_data
 from predict import predict_for_next_ten_mins, predict_for_next_instance
@@ -32,7 +32,7 @@ logging.basicConfig(
 # CACHING
 redis_host = os.getenv('REDIS_HOST', 'localhost')
 redis_client = redis.Redis(host=redis_host, port=6379, db=0)
-CACHE_TTL = 8
+CACHE_TTL = 15
 
 def get_cached_map_data(continent, task, model, scaler):
     cache_key = f"bokeh_map:{task}:{continent}"
@@ -42,7 +42,7 @@ def get_cached_map_data(continent, task, model, scaler):
         if cached:
             return json.loads(cached)
     except Exception as e:
-        print(f"Reddis error: {e}")
+        app.logger.error(f"Redis error: {e}")
         
     data = bokeh_data_helper(
         continent=continent,
@@ -71,6 +71,8 @@ try:
         task='next_ten_mins'
     )
     app.logger.info("All ML Engines initialized successfully!")
+    set_models(MODEL_NEXT_INSTANCE, SCALER_NEXT_INSTANCE,
+               MODEL_NEXT_TEN_MINS, SCALER_NEXT_TEN_MINS)
 except Exception as e:
     app.logger.critical(f"CRITICAL FAILURE during ML initialization: {e}")
     
