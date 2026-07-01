@@ -8,10 +8,16 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 
 **www.serenair.live**
 
-
 ---
 
 ## Features:
+- Next Instance Prediction 
+- Extended Horizon Prediction
+- Traffic Density/Convergence Forecasting
+- Real-time Dashboard
+- Multi-Continent Support
+- Weather Integration
+- Interactive Maps
 
 ---
 
