@@ -6,7 +6,7 @@ Serenair is a full-stack machine learning application that harnesses the power o
 Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to identify aircraft density/traffic clusters 10~ minutes ahead in time.
 
 
-**link: www.serenair.live**
+**www.serenair.live**
 
 ---
 
