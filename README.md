@@ -2,9 +2,9 @@
 
 **Real-time Flight Trajectory Prediction with Machine Learning Models**
 
-description
+Serenair is a full-stack machine learning application that harnesses the power of LSTM neural networks to predict aircraft position at next-instance and 10~ minutes ahead in real time using live ADS-B and wind data. 
 
-link: 
+link: www.serenair.live
 
 ---
 
