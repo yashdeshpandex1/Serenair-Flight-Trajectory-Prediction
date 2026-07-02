@@ -48,7 +48,6 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 -Infrastructure: Docker, Nginx, MLflow
 
 -API: OpenSky, Open-Meteo
-
 ```
 ---
 
