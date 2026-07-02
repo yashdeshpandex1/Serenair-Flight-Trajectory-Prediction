@@ -21,6 +21,8 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 - **Weather Integration**: Integration with wind data for better and reliable forecasting.
 - **Interactive Maps**: Bokeh-powered visualisation of flight trajectories and prediction maps.
 
+ <img width="900" height="682" alt="Screenshot_2-7-2026_201532_serenair live" src="https://github.com/user-attachments/assets/2b103705-e346-4cf6-ba93-377bfcbd0983" />
+
 ---
 
 ## Architecture and Tech Stack:
