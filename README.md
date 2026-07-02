@@ -32,7 +32,6 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
      src="https://github.com/user-attachments/assets/243db998-6c02-4904-a9d9-3cec36d1db96" />
 
 ---
----
 
 ## Architecture and Tech Stack:
 ### Data Pipeline
