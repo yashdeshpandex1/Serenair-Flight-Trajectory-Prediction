@@ -22,7 +22,7 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 - **Interactive Maps**: Bokeh-powered visualisation of flight trajectories and prediction maps.
 
 <img width="1457" height="772" alt="Screenshot_2-7-2026_201649_serenair live" src="https://github.com/user-attachments/assets/243db998-6c02-4904-a9d9-3cec36d1db96" />
-*Crowd density prediction*
+                                                              Crowd density prediction
 
 ---
 
