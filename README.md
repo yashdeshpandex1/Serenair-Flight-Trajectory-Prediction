@@ -13,13 +13,13 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 ---
 
 ## Features:
-- Next Instance Prediction 
-- Extended Horizon Prediction
-- Traffic Density/Convergence Forecasting
-- Real-time Dashboard
-- Multi-Continent Support
-- Weather Integration
-- Interactive Maps
+- **Next Instance Prediction**: Predict aircraft position for next instance (~10 secs).
+- **Extended Horizon Prediction**: Predict full ~10 minute trajectory paths for aircraft.
+- **Traffic Density/Convergence Forecasting**: Identify high-density airspace regions ~10 minutes in advance.
+- **Real-time Dashboard**: Get real time insights about live aircrafts.
+- **Multi-Continent Support**: Coverage for all continents.
+- **Weather Integration**: Integration with wind data for better and reliable forecasting.
+- **Interactive Maps**: Bokeh-powered visualisation of flight trajectories and prediction maps.
 
 ---
 
