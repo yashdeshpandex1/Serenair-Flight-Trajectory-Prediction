@@ -63,6 +63,30 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 
 ## Working:
 
+### 1. Data Collection
+-
+-
+-
+-
+
+### 2. Prediction Pipeline
+-
+-
+-
+-
+
+### 3. Inference
+-
+-
+-
+-
+
+### 4. Training
+-
+-
+-
+-
+
 ---
 
 ## Data Sources and Credits:
