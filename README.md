@@ -5,6 +5,7 @@
 Serenair is a full-stack machine learning application that harnesses the power of LSTM neural networks to predict aircraft position at next-instance and 10~ minutes ahead in real time using live ADS-B and wind data.
 Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to identify aircraft density/traffic clusters 10~ minutes ahead in time.
 
+<img width="1763" height="2069" alt="Screenshot_2-7-2026_125954_serenair live" src="https://github.com/user-attachments/assets/bb3e0a6f-7935-4e1c-8890-020b21febc65" />
 
 **www.serenair.live**
 
