@@ -80,10 +80,15 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 - The relevant weather/wind data is integrated at the time of data processing/prediction.
 
 ### 2. Prediction Pipeline
--
--
--
--
+- The user navigates to a page and triggers "/api/wakeup" which starts the background processes.
+- Background worker preprocesses real-time data:
+     - Cleans old and invalid records.
+     - Extracts useful engineered features.
+     - Creates a ten step sliding window.
+     - Separates independent/feature and dependent/target variables.
+     - Scales features using existing pre-trained scalers.
+- Models run inference on sequences for each continent and results are cached in Redis (prevents cold start).
+- Finally, visualisation maps are rendered using Bokeh.
 
 ### 3. Inference
 -
