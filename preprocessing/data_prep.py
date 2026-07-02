@@ -7,13 +7,13 @@ import argparse
 import pandas as pd
 
 # get working scripts from preprocessing/
-from preprocessing.data_cleaning import clean_df
-from preprocessing.feature_engineering import feature_engineering
-from preprocessing.sklearn_utilities import group_shuffle_split, scale_dataset 
-from preprocessing.utilities import sort_values, initialise_features_and_target, \
+from data_cleaning import clean_df
+from feature_engineering import feature_engineering
+from sklearn_utilities import group_shuffle_split, scale_dataset 
+from utilities import sort_values, initialise_features_and_target, \
     initialise_df, integrate_weather_data
-from preprocessing.rnn_sequences import save_sequences
-from preprocessing.fetch_weather_data import get_weather_data
+from rnn_sequences import save_sequences
+from fetch_weather_data import get_weather_data
 
 
 def prep_train_data(path='../data/opensky_raw.csv', task='next_instance'):

@@ -2,9 +2,8 @@ import numpy as np
 import psycopg
 from datetime import datetime
 import time
-from .database_conn import get_connection_uri
+from database_conn import get_connection_uri
 import pandas as pd
-from .fetch_live_data import fetch_current_weather
 
 
 def prod_database_ingestion(df, conn_string):
@@ -62,6 +61,7 @@ def prune_old_data(conn_string, tolerance_mins=15):
         
       
 def fetch_and_integrate_data(continent='europe'):
+    from workers.fetch_live_data import fetch_current_weather
     bbox = get_bbox(continent_name=continent)
     min_lat, max_lat, min_lon, max_lon = bbox
     conn_string = get_connection_uri()
@@ -116,6 +116,7 @@ def fetch_and_integrate_data(continent='europe'):
         return pd.DataFrame()
                 
 def fetch_global_data():
+    from workers.fetch_live_data import fetch_current_weather
     conn_string = get_connection_uri()
     query = """
         SELECT 

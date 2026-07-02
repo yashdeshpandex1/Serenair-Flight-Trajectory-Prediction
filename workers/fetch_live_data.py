@@ -2,9 +2,10 @@ import pandas as pd
 import requests
 import logging
 from dotenv import load_dotenv
-import os, time, sys
+import os
+import time
 from datetime import datetime, timedelta
-
+from db_utils import fetch_and_integrate_data
 
 # from opensky api itself, refreshes the token if it expires
 class TokenManager:
@@ -170,6 +171,19 @@ def fetch_current_weather(lat, lon):
         return None, None, None
         
     return result
+
+
+def get_data_for_drift_check(duration_seconds=300):
+    start_time = time.time()
+    collected_data = []
+    
+    while time.time() - start_time < duration_seconds:
+        df = fetch_and_integrate_data('global')
+        collected_data.append(df)
+        time.sleep(5)
+        
+    df_combined = pd.concat(collected_data)
+    return df_combined
 
 
 if __name__ == "__main__":

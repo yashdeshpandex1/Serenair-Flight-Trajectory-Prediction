@@ -1,17 +1,17 @@
 import torch 
 import torch.nn as nn
-from modelling.model_1 import LSTMModelV1
-from modelling.model_2 import LSTMModelV2
-from modelling.model_3 import GRUModel
-from modelling.model_4 import BidirectionalLSTMModelV1
-from modelling.model_5 import HybridConvLSTMModelV1
-from modelling.model_6 import HybridConvLSTMModelV2
-from modelling.model_7 import HybridConvLSTMV3
-from modelling.model_8 import HybridConvLSTMBidirectionalModel
-from modelling.model_9 import AttentionModel
-from modelling.model_10 import HybridConvAttentionGRUModel
-from modelling.model_11 import Seq2SeqTrajectoryLSTMV1
-from modelling.model_12 import Seq2SeqTrajectoryLSTMV2
+from model_1 import LSTMModelV1
+from model_2 import LSTMModelV2
+from model_3 import GRUModel
+from model_4 import BidirectionalLSTMModelV1
+from model_5 import HybridConvLSTMModelV1
+from model_6 import HybridConvLSTMModelV2
+from model_7 import HybridConvLSTMV3
+from model_8 import HybridConvLSTMBidirectionalModel
+from model_9 import AttentionModel
+from model_10 import HybridConvAttentionGRUModel
+from model_11 import Seq2SeqTrajectoryLSTMV1
+from model_12 import Seq2SeqTrajectoryLSTMV2
 
 MODEL_REGISTRY = {
     'LSTMModelV1': LSTMModelV1,

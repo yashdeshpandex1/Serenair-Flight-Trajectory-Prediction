@@ -1,5 +1,5 @@
 import os,  sys
-from modelling.setup_mlflow import setup_mlflow
+from setup_mlflow import setup_mlflow
 from mlflow.tracking import MlflowClient
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import Model
