@@ -30,7 +30,7 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 
 <img width="1000" height="530" alt="Crowd Density Prediction Map" 
      src="https://github.com/user-attachments/assets/243db998-6c02-4904-a9d9-3cec36d1db96" />
-
+</div>
 ---
 
 ## Architecture and Tech Stack:
