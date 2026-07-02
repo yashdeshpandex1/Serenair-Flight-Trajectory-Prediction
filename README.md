@@ -38,6 +38,12 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 ```
 
 ### Tech Stack
+```
+-Backend: Flask, Pytorch, Pandas, Numpy, Scikit-learn
+-Frontend: Bokeh, Plotly, D3.js
+-Database and Caching: PostgreSQL, Redis
+
+```
 ---
 
 ## Model Architectures and Hyperparameters:
