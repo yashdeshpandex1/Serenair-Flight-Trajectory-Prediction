@@ -29,7 +29,7 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 *Identify high-density airspace regions and flight convergence zones ~10 minutes in advance using DBSCAN clustering algorithm on trajectory prediction*
 
 <img width="1000" height="530" alt="Crowd Density Prediction Map" 
-     src="https://github.com/user-attachments/assets/243db998-6c02-4904-a9d9-3cec36d1db96" />
+     src="https://github.com/user-attachments/assets/e0191a1a-0a6c-4e20-9370-8bc45e69b9de" />
 </div>
 
 ---
