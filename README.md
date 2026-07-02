@@ -22,7 +22,20 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 ---
 
 ## Architecture and Tech Stack:
-
+### Data Pipeline
+```
+  OpenSky Network API (live ADS-B data)
+                 ↓
+    Data cleaning and processing
+                 ↓
+      Open-Meteo Weather Integration
+                 ↓
+        Feature Engineering
+                 ↓
+        PostgreSQL database
+                 ↓
+        Predictions (with Redis caching)
+```
 ---
 
 ## Model Architectures and Hyperparameters:
