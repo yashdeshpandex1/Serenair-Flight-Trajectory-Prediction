@@ -30,9 +30,9 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
                  ↓
     Open-Meteo Weather Integration
                  ↓
-      Feature Engineering
+        Feature Engineering
                  ↓
-      PostgreSQL database
+        PostgreSQL database
                  ↓
   Predictions (with Redis caching)
 ```
