@@ -90,13 +90,7 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 - Models run inference on sequences for each continent and results are cached in Redis (prevents cold start).
 - Finally, visualisation maps are rendered using Bokeh.
 
-### 3. Inference
--
--
--
--
-
-### 4. Training
+### 3. Training
 -
 -
 -
