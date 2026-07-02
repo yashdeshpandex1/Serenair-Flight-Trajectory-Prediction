@@ -73,6 +73,8 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 ---
 
 ## Contact me:
+- **LinkedIn**: [Your LinkedIn]
+- **Email**: yashdeshpandex1@gmail.com
 
 ---
 
