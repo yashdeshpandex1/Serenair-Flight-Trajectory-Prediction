@@ -36,6 +36,8 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
                  ↓
   Predictions (with Redis caching)
 ```
+
+### Tech Stack
 ---
 
 ## Model Architectures and Hyperparameters:
