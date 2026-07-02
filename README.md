@@ -75,10 +75,9 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 ## Working:
 
 ### 1. Data Collection
--
--
--
--
+- Collects global flight data from OpenSky API once the background worker is triggered (Background workers are triggered once anyone visits the website).
+- Ingests all the data onto the PostgreSQL database, prune old data (>15 mins).
+- The relevant weather/wind data is integrated at the time of data processing/prediction.
 
 ### 2. Prediction Pipeline
 -
