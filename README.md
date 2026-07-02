@@ -78,10 +78,21 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 
 ## License:
 
+This project is built with open-source components:
+- Individual library licenses apply (see requirements.txt)
+- Data from OpenSky Network (CC BY 4.0)
+- Weather data from Open-Meteo (CC BY 4.0)
+
 ---
 
 ## Acknowlegements:
 
+- OpenSky Network for accessible flight data
+- Open-Meteo for free weather APIs
+- PyTorch & Flask communities
+- All open-source contributors
+
 ---
 
+**Last Updated**: July 2026
 
