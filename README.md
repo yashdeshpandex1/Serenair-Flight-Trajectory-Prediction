@@ -21,17 +21,16 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 - **Weather Integration**: Integration with wind data for better and reliable forecasting.
 - **Interactive Maps**: Bokeh-powered visualisation of flight trajectories and prediction maps.
 
-----
+---
 <div align="center">
 
 **Crowd Density Prediction**
 
 *Identify high-density airspace regions and flight convergence zones ~10 minutes in advance using DBSCAN clustering algorithm on trajectory prediction*
 
-</div>
-
 <img width="1000" height="530" alt="Crowd Density Prediction Map" 
      src="https://github.com/user-attachments/assets/243db998-6c02-4904-a9d9-3cec36d1db96" />
+
 ---
 ---
 
