@@ -17,8 +17,6 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 - **Extended Horizon Prediction**: Predict full ~10 minute trajectory paths for aircraft.
 - **Traffic Density/Convergence Forecasting**: Identify high-density airspace regions ~10 minutes in advance.
 - **Real-time Dashboard**: Get real time insights about live aircrafts.
-          <img width="1633" height="1241" alt="Screenshot_2-7-2026_201532_serenair live" src="https://github.com/user-attachments/assets/2b103705-e346-4cf6-ba93-377bfcbd0983" />
-
 - **Multi-Continent Support**: Coverage for all continents.
 - **Weather Integration**: Integration with wind data for better and reliable forecasting.
 - **Interactive Maps**: Bokeh-powered visualisation of flight trajectories and prediction maps.
