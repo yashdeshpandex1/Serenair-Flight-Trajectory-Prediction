@@ -1,27 +1,134 @@
 # Serenair-Flight-Trajectory-Detection
-Retrieves data from OpenSky api to predict flight trajectory.
-<br></br>
 
-> You can get a copy of the raw global dataset that I collected from OpenSky here: [OpenSky_raw_dataset](https://github.com/yashdeshpandex1/Serenair-Flight-Trajectory-Detection/releases/download/v1.0/opensky_raw.csv)
-<br></br>
+**Real-time Flight Trajectory Prediction with Machine Learning Models**
 
-### Database Schema:
-- Created two tables
-  1. aircraft - has information about the aircrafts (icao24 and origin country).
-  2. aircraft states - has all the aircraft state vectors.
- 
-<img width="401" height="496" alt="db_schema" src="https://github.com/user-attachments/assets/783daa08-1a09-4c06-98f6-efec5d918b44" />
+Serenair is a full-stack machine learning application that harnesses the power of LSTM neural networks to predict aircraft position at next-instance and 10~ minutes ahead in real time using live ADS-B and wind data.
+Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to identify aircraft density/traffic clusters 10~ minutes ahead in time.
 
-<br></br>
+**www.serenair.live**
 
-### Training:
-- Created an npz file for rnn training of window size = 10 where X has features: [] and y has target columns: []. Anchor is for reference point, since we are predicting delta coordinates rather than the absolute ones.
-- Used dataloaders from pytorch and device = cuda enabled. Experiment tracking is done via MLFlow on Azure ML Workspace and sqlite if the user doesn't have access.
-- Created a custom loss function (Haversine formula) to calculate distance between two points on Earth.
-- Created modular engine.py for easy model initialisation, training and testing as well as created a baseline LSTM model.
+<img width="1763" height="2069" alt="Screenshot_2-7-2026_125954_serenair live" src="https://github.com/user-attachments/assets/bb3e0a6f-7935-4e1c-8890-020b21febc65" />
 
 
-### Deployment:
-- Created a postgreSQL database on Azure.
-  configuration: Burstable, B1ms, 1 vCores, 2 GiB RAM, 32 GiB storage. I found this low-end resource ideal for this project.
-- Mlflow server used for Experiment tracking is setup using Azure Machine Learning Workspace.
+---
+
+## Features:
+- **Next Instance Prediction**: Predict aircraft position for next instance (~10 secs).
+- **Extended Horizon Prediction**: Predict full ~10 minute trajectory paths for aircraft.
+- **Traffic Density/Convergence Forecasting**: Identify high-density airspace regions ~10 minutes in advance.
+- **Real-time Dashboard**: Get real time insights about live aircrafts.
+- **Multi-Continent Support**: Coverage for all continents.
+- **Weather Integration**: Integration with wind data for better and reliable forecasting.
+- **Interactive Maps**: Bokeh-powered visualisation of flight trajectories and prediction maps.
+
+---
+<div align="center">
+
+**Crowd Density Prediction**
+
+*Identify high-density airspace regions and flight convergence zones ~10 minutes in advance using DBSCAN clustering algorithm on trajectory prediction*
+
+<img width="1000" height="530" alt="Crowd Density Prediction Map" 
+     src="https://github.com/user-attachments/assets/e0191a1a-0a6c-4e20-9370-8bc45e69b9de" />
+</div>
+
+---
+
+## Architecture and Tech Stack:
+### Data Pipeline
+```
+  OpenSky Network API (live ADS-B data)
+                 ↓
+    Data cleaning and processing
+                 ↓
+    Open-Meteo Weather Integration
+                 ↓
+        Feature Engineering
+                 ↓
+        PostgreSQL database
+                 ↓
+  Predictions (with Redis caching)
+```
+
+### Tech Stack
+```
+-Backend: Flask, Pytorch, Pandas, Numpy, Scikit-learn
+
+-Frontend: Bokeh, Plotly, D3.js
+
+-Database and Caching: PostgreSQL, Redis
+
+-Infrastructure: Docker, Nginx, MLflow
+
+-API: OpenSky, Open-Meteo
+```
+---
+
+## Model Architectures and Hyperparameters:
+
+---
+
+## Performance and Results:
+
+---
+
+## Working:
+
+### 1. Data Collection
+- Collects global flight data from OpenSky API once the background worker is triggered (Background workers are triggered once anyone visits the website).
+- Ingests all the data onto the PostgreSQL database, prune old data (>15 mins).
+- The relevant weather/wind data is integrated at the time of data processing/prediction.
+
+### 2. Prediction Pipeline
+- The user navigates to a page and triggers "/api/wakeup" which starts the background processes.
+- Background worker preprocesses real-time data:
+     - Cleans old and invalid records.
+     - Extracts useful engineered features.
+     - Creates a ten step sliding window.
+     - Separates independent/feature and dependent/target variables.
+     - Scales features using existing pre-trained scalers.
+- Models run inference on sequences for each continent and results are cached in Redis (prevents cold start).
+- Finally, visualisation maps are rendered using Bokeh.
+
+### 3. Training
+-
+-
+-
+-
+
+---
+
+## Data Sources and Credits:
+
+---
+
+## Future Enhancements:
+
+---
+
+## Contact me:
+- **LinkedIn**: [Your LinkedIn]
+- **Email**: yashdeshpandex1@gmail.com
+
+---
+
+## License:
+
+This project is built with open-source components:
+- Individual library licenses apply (see requirements.txt)
+- Data from OpenSky Network (CC BY 4.0)
+- Weather data from Open-Meteo (CC BY 4.0)
+
+---
+
+## Acknowlegements:
+
+- OpenSky Network for accessible flight data
+- Open-Meteo for free weather APIs
+- PyTorch & Flask communities
+- All open-source contributors
+
+---
+
+**Last Updated**: July 2026
+
