@@ -7,13 +7,13 @@ import argparse
 import pandas as pd
 
 # get working scripts from preprocessing/
-from data_cleaning import clean_df
-from feature_engineering import feature_engineering
-from sklearn_utilities import group_shuffle_split, scale_dataset 
-from utilities import sort_values, initialise_features_and_target, \
+from .data_cleaning import clean_df
+from .feature_engineering import feature_engineering
+from .sklearn_utilities import group_shuffle_split, scale_dataset 
+from .utilities import sort_values, initialise_features_and_target, \
     initialise_df, integrate_weather_data
-from rnn_sequences import save_sequences
-from fetch_weather_data import get_weather_data
+from .rnn_sequences import save_sequences
+from .fetch_weather_data import get_weather_data
 
 
 def prep_train_data(path='../data/opensky_raw.csv', task='next_instance'):
@@ -25,8 +25,11 @@ def prep_train_data(path='../data/opensky_raw.csv', task='next_instance'):
         task (str): Choosing prediction task. Defaults to 'next_instance'.
     """
     
-    save_dir = Path(f'../data/rnn_data_{task}/') # define where feature scaler will be saved
-    save_dir.mkdir(parents=True, exist_ok=True) # Create the folder if missing
+    # Use absolute path from current file location
+    project_root = Path(__file__).parent.parent
+    save_dir = project_root / f'data' / f'rnn_data_{task}'
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
     df = initialise_df(path) # read csv file
     df_sorted = sort_values(df) # sort the dataframe
     df_clean = clean_df(df_sorted) # clean the dataframe
@@ -49,8 +52,8 @@ def prep_train_data(path='../data/opensky_raw.csv', task='next_instance'):
 
     save_sequences(df_train, df_test, features, target, task=task)
     
-    scaler_path = save_dir/f'feature_scaler_{task}.joblib'
-    target_path = save_dir/f'target_scaler_{task}.joblib'
+    scaler_path = save_dir / f'feature_scaler_{task}.joblib'
+    target_path = save_dir / f'target_scaler_{task}.joblib'
     
     joblib.dump(feature_scaler, scaler_path)
     joblib.dump(target_scaler, target_path)
@@ -69,8 +72,9 @@ def prep_live_inference_data(df, window_size=10,
     df['raw_latitude'] = df['latitude']
     df['raw_longitude'] = df['longitude']
     
-    scaler_path = Path(f'../data/rnn_data_{task}/feature_scaler_{task}.joblib')
-    feature_scaler = joblib.load(scaler_path)
+    project_root = Path(__file__).parent.parent
+    scaler_path = project_root / 'data' / f'rnn_data_{task}' / f'feature_scaler_{task}.joblib'
+    feature_scaler = joblib.load(str(scaler_path))
     
     df = df.dropna(subset=features)
     df[features] = feature_scaler.transform(df[features])

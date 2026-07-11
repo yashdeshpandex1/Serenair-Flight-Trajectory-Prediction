@@ -1,9 +1,9 @@
 import threading
-from database_conn import get_connection_uri
+from .database_conn import get_connection_uri
 import time
 from datetime import datetime
-from fetch_live_data import fetch_live_flights_data
-from db_utils import prod_database_ingestion, prune_old_data
+from .fetch_live_data import fetch_live_flights_data
+from .db_utils import prod_database_ingestion, prune_old_data
 import logging
 import redis
 import json
