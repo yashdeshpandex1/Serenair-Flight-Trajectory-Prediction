@@ -136,56 +136,92 @@ Weather integration (wind at 250 hPa + temperature at 2m) improved prediction ac
 
 ## Working:
 
-### 1. Data Collection
-- Collects global flight data from OpenSky API once the background worker is triggered (Background workers are triggered once anyone visits the website).
-- Ingests all the data onto the PostgreSQL database, prune old data (>15 mins).
-- The relevant weather/wind data is integrated at the time of data processing/prediction.
+## 1. Data Collection & Integration
 
-### 2. Prediction Pipeline
-- The user navigates to a page and triggers "/api/wakeup" which starts the background processes.
-- Background worker preprocesses real-time data:
-     - Cleans old and invalid records.
-     - Extracts useful engineered features.
-     - Creates a ten step sliding window.
-     - Separates independent/feature and dependent/target variables.
-     - Scales features using existing pre-trained scalers.
-- Models run inference on sequences for each continent and results are cached in Redis (prevents cold start).
-- Finally, visualisation maps are rendered using Bokeh.
+The system collects global ADS-B flight data in real-time via the OpenSky Network API. Data collection is triggered automatically when users visit the application, initiating background workers that continuously poll the API at 10-second intervals.
 
-### 3. Dataset and Training
+**Data Pipeline:**
+- Flight data is ingested into PostgreSQL for persistent storage
+- Old records (>15 minutes) are automatically pruned to maintain fresh datasets
+- Meteorological data (wind, temperature) from Open-Meteo is fetched and temporally aligned with flight observations
+- All data undergoes automated quality checks to remove invalid or corrupted records
 
-## Data Source
-- **OpenSky Network API**: Global ADS-B flight tracking data
-- **Collection Date**: April 4, 2026
-- **Dataset Size**: ~1 million observations
-- **Polling Frequency**: 10-second intervals
-- **Coverage**: Global regions
+## 2. Real-Time Prediction Pipeline
 
-## Features (Total: 21)
- 
-### ADS-B Features (8)
-- Position: latitude, longitude, barometric altitude
-- Kinematics: velocity, vertical rate, true track
-- Time: timestamp, aircraft category
-### Engineered Features (6)
-- Temporal: delta_time, hour_sin, hour_cos
-- Kinematic: acceleration, turn_rate, climb_phase
-### Meteorological Features (3)
-- Wind speed at 250 hPa (jet stream altitude)
-- Wind direction at 250 hPa
-- Temperature at 2 meters (surface level)
-### Target Variables (2)
-- Δ Latitude (change in latitude)
-- Δ Longitude (change in longitude)
-## Data Preprocessing
-- **Scaling**: StandardScaler for features, RobustScaler for targets
-- **Sequence Creation**: 10-timestep sliding window
-- **Train/Test Split**: Group Shuffle Split (70/15/15) at flight level
-- **Validation**: Stratified by aircraft ICAO24 identifier
+When users navigate to prediction pages, the `/api/wakeup` endpoint triggers the background preprocessing and inference workflow:
 
+**Preprocessing Steps:**
+1. Data cleaning: Removes stale records, handles missing values, filters anomalies
+2. Feature engineering: Derives temporal (hour encoding), kinematic (acceleration, turn rate), and contextual features from raw ADS-B data
+3. Sequence creation: Constructs 10-timestep sliding windows (100-second history) for each aircraft trajectory
+4. Feature scaling: Applies pre-trained StandardScaler to input features and RobustScaler to target variables (delta coordinates)
 
+**Inference & Caching:**
+- Models run inference on preprocessed sequences per continent
+- Predictions are cached in Redis (~15-second TTL) to minimize latency and redundant computation
+- Results include next-instance positions (t+1) and 10-minute trajectory forecasts (t+6 to t+60)
+
+**Visualization:**
+- Bokeh-powered interactive maps render predicted trajectories on geographic base layers
+- DBSCAN clustering identifies traffic convergence zones from multi-step predictions
+- Maps are saved as standalone HTML files for download and offline use
 
 ---
+
+# Dataset & Features
+ 
+## Data Source
+ 
+| Property | Details |
+|----------|---------|
+| **Source** | OpenSky Network API (ADS-B broadcast data) |
+| **Collection Date** | April 4, 2026 |
+| **Dataset Size** | ~1 million observations |
+| **Polling Frequency** | 10-second intervals |
+| **Geographic Coverage** | Global (all regions) |
+| **Weather Data** | Open-Meteo meteorological API |
+ 
+## Feature Set (21 Total)
+ 
+### Raw ADS-B Features (8)
+- **Position:** Latitude, longitude, barometric altitude
+- **Kinematics:** Ground speed (velocity), true track (heading), vertical rate
+- **Metadata:** Timestamp, aircraft mass category
+### Engineered Features (6)
+Derived from raw observations to capture temporal and dynamic patterns:
+- **Temporal Encoding:** Δt (time since last observation), hour_sin, hour_cos (cyclic hour encoding)
+- **Kinematic Derivatives:** Acceleration (dv/dt), turn rate (dtrack/dt), climb phase classification
+### Meteorological Features (3)
+Critical for capturing atmospheric influences on flight dynamics:
+- **Wind Speed at 250 hPa:** Jet stream-level wind velocity (affects cruise-phase ground speed)
+- **Wind Direction at 250 hPa:** Directional component critical for trajectory modeling
+- **Surface Temperature (2m):** Air density proxy affecting takeoff and climb performance
+### Target Variables (2)
+- **Δ Latitude:** Change in latitude from current to next timestep
+- **Δ Longitude:** Change in longitude from current to next timestep
+
+---
+ 
+# Data Preprocessing & Training
+ 
+## Preprocessing Pipeline
+ 
+**Scaling Strategy:**
+- **Features (X):** StandardScaler (μ=0, σ=1) for neural network stability
+- **Targets (y):** RobustScaler (median-centered, IQR-normalized) to handle outliers in coordinate deltas
+**Sequence Construction:**
+- Sliding window of 10 timesteps (100 seconds of history)
+- Each window creates one training sample for t+1 prediction
+- Extended windows (10 steps × 10 steps) for multi-step t+60 prediction
+**Train/Test Split:**
+- **Strategy:** Group Shuffle Split at aircraft level (ICAO24 identifier)
+- **Ratio:** 90% training, 10% validation
+- **Purpose:** Prevents data leakage by keeping entire flight trajectories in single partition
+**Validation Approach:**
+- Time-series aware cross-validation (no future-to-past leakage)
+- Stratified sampling ensures representation of flight types and regions
+- Early stopping based on Haversine distance metric on validation set
+
 
 ## Data Sources and Credits:
 
