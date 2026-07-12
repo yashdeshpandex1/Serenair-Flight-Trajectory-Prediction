@@ -271,6 +271,9 @@ def bokeh_data_next_ten_mins():
     )
     return jsonify(data)
 
+@app.route('/references-and-credits')
+def references_and_credits():
+    return render_template('credits.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False)
