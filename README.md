@@ -123,8 +123,8 @@ Hyperparameters:
  
 | Model | Horizon | Mean Error | Improvement |
 |-------|---------|-----------|-------------|
-| LSTM | t+1 | [Your result] | - |
-| Seq2Seq LSTM | t+60 | [Your result] | - |
+| LSTM | t+1 | 322.0 | 79.2% |
+| Seq2Seq LSTM | t+60 | 763.60 | 65.3% |
  
 ## Weather Integration Impact
 Weather integration (wind at 250 hPa + temperature at 2m) improved prediction accuracy by **20-27%** compared to ADS-B-only models.
