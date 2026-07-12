@@ -116,8 +116,8 @@ Hyperparameters:
  
 | Baseline | Horizon | Mean Error |
 |----------|---------|-----------|
-| Linear Regression | t+1 | 1,543.60 m |
-| Naive (Constant Velocity) | t+60 | 2,196.40 m |
+| Linear Baseline (Constant Velocity)| t+1 | 1,543.60 m |
+| Naive Repeat Baseline (Constant Velocity and heading) | t+60 | 2,196.40 m |
  
 ## Model Performance
  
