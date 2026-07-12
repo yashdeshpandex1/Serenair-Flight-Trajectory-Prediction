@@ -134,8 +134,6 @@ Weather integration (wind at 250 hPa + temperature at 2m) improved prediction ac
 
 ## Working:
 
-## Working:
-
 ## 1. Data Collection & Integration
 
 The system collects global ADS-B flight data in real-time via the OpenSky Network API. Data collection is triggered automatically when users visit the application, initiating background workers that continuously poll the API at 10-second intervals.
@@ -222,17 +220,76 @@ Critical for capturing atmospheric influences on flight dynamics:
 - Stratified sampling ensures representation of flight types and regions
 - Early stopping based on Haversine distance metric on validation set
 
-
-## Data Sources and Credits:
+---
+ 
+# Key Findings
+ 
+1. **Weather Integration**: Wind data at cruise altitude (250 hPa) is critical for trajectory prediction; integration improves accuracy by 20-27%
+2. **Multi-Step Prediction**: Seq2Seq architecture effectively learns temporal dependencies over 10-minute horizons
+3. **Real-World Applicability**: DBSCAN clustering transforms point predictions into actionable traffic density maps for air traffic control
+4. **Scalability**: System processes global flights in real-time with Redis caching (~15-second refresh)
 
 ---
-
-## Future Enhancements:
+ 
+# Future Work
+- Anomaly detection in trajectory patterns
+- Integration with actual ATC data for validation
+- Extended prediction horizon (20+ minutes)
+---
+ 
+# References
+- Sutskever et al. (2014) - Seq2Seq Learning
+- Hochreiter & Schmidhuber (1997) - LSTM Networks
+- Ester et al. (1996) - DBSCAN Algorithm
+- Schäfer et al. (2014) - OpenSky Network
+- Huber (1964) - Robust Loss Functions
+ 
+---
+ 
+# Getting Started
+ 
+## Prerequisites
+```
+Python 3.10+
+PyTorch 2.0+
+PostgreSQL 13+
+Redis 6.0+
+Docker (for containerized deployment)
+```
+ 
+## Installation
+```bash
+git clone https://github.com/yashdeshpandex1/Serenair-Flight-Trajectory-Prediction.git
+cd Serenair
+pip install -r requirements.txt
+```
+ 
+## Configuration
+```bash
+# Create .env file with API credentials
+OPENSKY_USERNAME=your_username
+OPENSKY_PASSWORD=your_password
+DATABASE_URL=postgresql://user:pass@localhost/serenair
+REDIS_HOST=localhost
+```
+ 
+## Run Application
+```bash
+# Development
+flask run
+ 
+# Production (Docker)
+docker-compose up -d
+```
+ 
+Access at `http://localhost:5000`
+ 
+---
 
 ---
 
 ## Contact me:
-- **LinkedIn**: [Your LinkedIn]
+- **LinkedIn**: https://www.linkedin.com/in/yash-deshpandeb6
 - **Email**: yashdeshpandex1@gmail.com
 
 ---
