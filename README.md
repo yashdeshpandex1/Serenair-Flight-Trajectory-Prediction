@@ -134,6 +134,8 @@ Weather integration (wind at 250 hPa + temperature at 2m) improved prediction ac
 
 ## Working:
 
+## Working:
+
 ### 1. Data Collection
 - Collects global flight data from OpenSky API once the background worker is triggered (Background workers are triggered once anyone visits the website).
 - Ingests all the data onto the PostgreSQL database, prune old data (>15 mins).
@@ -180,6 +182,7 @@ Weather integration (wind at 250 hPa + temperature at 2m) improved prediction ac
 - **Sequence Creation**: 10-timestep sliding window
 - **Train/Test Split**: Group Shuffle Split (70/15/15) at flight level
 - **Validation**: Stratified by aircraft ICAO24 identifier
+
 
 
 ---
