@@ -123,8 +123,8 @@ Hyperparameters:
  
 | Model | Horizon | Mean Error | Improvement |
 |-------|---------|-----------|-------------|
-| LSTM | t+1 | 322.0 | 79.2% |
-| Seq2Seq LSTM | t+60 | 763.60 | 65.3% |
+| LSTM | t+1 | 322.0 | 79.2% vs baseline |
+| Seq2Seq LSTM | t+60 | 763.60 | 65.3% vs baseline |
  
 ## Weather Integration Impact
 Weather integration (wind at 250 hPa + temperature at 2m) improved prediction accuracy by **20-27%** compared to ADS-B-only models.
@@ -150,11 +150,37 @@ Weather integration (wind at 250 hPa + temperature at 2m) improved prediction ac
 - Models run inference on sequences for each continent and results are cached in Redis (prevents cold start).
 - Finally, visualisation maps are rendered using Bokeh.
 
-### 3. Training
--
--
--
--
+### 3. Dataset and Training
+
+## Data Source
+- **OpenSky Network API**: Global ADS-B flight tracking data
+- **Collection Date**: April 4, 2026
+- **Dataset Size**: ~1 million observations
+- **Polling Frequency**: 10-second intervals
+- **Coverage**: Global regions
+
+## Features (Total: 21)
+ 
+### ADS-B Features (8)
+- Position: latitude, longitude, barometric altitude
+- Kinematics: velocity, vertical rate, true track
+- Time: timestamp, aircraft category
+### Engineered Features (6)
+- Temporal: delta_time, hour_sin, hour_cos
+- Kinematic: acceleration, turn_rate, climb_phase
+### Meteorological Features (3)
+- Wind speed at 250 hPa (jet stream altitude)
+- Wind direction at 250 hPa
+- Temperature at 2 meters (surface level)
+### Target Variables (2)
+- Δ Latitude (change in latitude)
+- Δ Longitude (change in longitude)
+## Data Preprocessing
+- **Scaling**: StandardScaler for features, RobustScaler for targets
+- **Sequence Creation**: 10-timestep sliding window
+- **Train/Test Split**: Group Shuffle Split (70/15/15) at flight level
+- **Validation**: Stratified by aircraft ICAO24 identifier
+
 
 ---
 
