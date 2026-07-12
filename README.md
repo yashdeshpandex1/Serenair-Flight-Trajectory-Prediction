@@ -65,6 +65,44 @@ Furthermore, it makes use of DBSCAN clustering algorithm on these predictions to
 ---
 
 ## Model Architectures and Hyperparameters:
+## LSTM (Next Instance Prediction)
+Predicts aircraft position at t+1 (~10 seconds ahead)
+ 
+```
+Model: LSTMModelV1
+Input: 10-step window of 21 features
+Output: 2 values (Δlat, Δlon)
+ 
+Hyperparameters:
+- Batch Size: 128
+- Epochs: 100
+- Hidden Size: 64
+- Num Layers: 2
+- Learning Rate: 0.001
+- Optimizer: Adam
+- Loss Function: Huber Loss (δ=1.0)
+- Weight Decay: 1e-05
+```
+ 
+## Seq2Seq LSTM (10-Minute Prediction)
+Predicts full 10-minute trajectory (t+6 to t+60, one prediction per minute)
+ 
+```
+Model: Seq2SeqLSTMV1
+Encoder: LSTM processing 10-step history
+Decoder: LSTM generating 10 future steps
+ 
+Hyperparameters:
+- Batch Size: 128
+- Epochs: 100
+- Hidden Size: 64
+- Num Layers: 2
+- Learning Rate: 0.001
+- Optimizer: Adam
+- Loss Function: Huber Loss (δ=1.0)
+- Weight Decay: 1e-05
+```
+
 
 ---
 
